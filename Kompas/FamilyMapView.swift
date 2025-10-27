@@ -20,14 +20,14 @@ struct FamilyMember: Identifiable {
 
 struct FamilyMapView: View {
     @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.77, longitude: -122.43), // San Francisco
+        center: CLLocationCoordinate2D(latitude: -35.02215137264192, longitude: -71.2375557705796), // Curicó
         span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
     )
     
     let members = [
-        FamilyMember(name: "Benjamín Puebla", locationInfo: "Curicó • Batería", coordinate: .init(latitude: 37.7749, longitude: -122.4194)),
-        FamilyMember(name: "José Díaz", locationInfo: "Santiago • Batería", coordinate: .init(latitude: 37.78, longitude: -122.43)),
-        FamilyMember(name: "Pablo Correa", locationInfo: "Romeral • Batería", coordinate: .init(latitude: 37.76, longitude: -122.42))
+        FamilyMember(name: "Benjamín Puebla", locationInfo: "Curicó • Batería", coordinate: .init(latitude: -34.97421747130357, longitude: -71.23060052963186)),
+        FamilyMember(name: "José Díaz", locationInfo: "Santiago • Batería", coordinate: .init(latitude: -34.99077925554075, longitude: -71.24494371375613)),
+        FamilyMember(name: "Pablo Correa", locationInfo: "Romeral • Batería", coordinate: .init(latitude: -34.95671844493942, longitude: -71.12495151842457))
     ]
 
     var body: some View {
