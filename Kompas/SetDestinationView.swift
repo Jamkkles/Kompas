@@ -11,14 +11,23 @@ import SwiftUI
 import MapKit
 
 struct SetDestinationView: View {
+    
+    // 1. <-- MODIFICACIÓN: Leemos el LocationManager desde el entorno
+    @EnvironmentObject var locationManager: LocationManager
+    
     @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7577, longitude: -122.4376),
+        center: CLLocationCoordinate2D(latitude: -34.9833, longitude: -71.2333), // Curicó
         span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
     )
+    
+    // 2. <-- MODIFICACIÓN: Variable para centrar el mapa solo una vez
+    @State private var hasCenteredMap = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Map(coordinateRegion: $region).ignoresSafeArea()
+            // 3. <-- MODIFICACIÓN: Añadimos 'showsUserLocation: true'
+            Map(coordinateRegion: $region, showsUserLocation: true)
+                .ignoresSafeArea()
             
             // Tarjeta de información inferior
             VStack(alignment: .leading, spacing: 12) {
@@ -54,9 +63,18 @@ struct SetDestinationView: View {
             .cornerRadius(20)
             .padding()
         }
+        // 4. <-- MODIFICACIÓN: Observamos cambios en la ubicación
+        .onChange(of: locationManager.userLocation) { newLocation in
+            if let newLocation, !hasCenteredMap {
+                region.center = newLocation
+                hasCenteredMap = true
+            }
+        }
     }
 }
 
 #Preview {
     SetDestinationView()
+        // 5. <-- MODIFICACIÓN: Añadimos un manager de prueba al Preview
+        .environmentObject(LocationManager())
 }
