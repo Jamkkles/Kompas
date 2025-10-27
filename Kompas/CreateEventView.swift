@@ -38,6 +38,12 @@ struct CreateEventView: View {
     @State private var selectedTime: Date = Date()
     @State private var showTimePicker = false
 
+    @State private var descriptionText: String = ""
+    @FocusState private var isEditingDescription: Bool
+    @State private var participants: [String] = ["José Díaz"]
+    @State private var showAddParticipant: Bool = false
+    @State private var newParticipantName: String = ""
+
     private let places: [Place] = [
         Place(name: "Taqueria Maria", coordinate: CLLocationCoordinate2D(latitude: 37.7880, longitude: -122.4074)),
         Place(name: "Café Buena Vista", coordinate: CLLocationCoordinate2D(latitude: 37.8067, longitude: -122.4200)),
@@ -131,12 +137,43 @@ struct CreateEventView: View {
                 }
                 
                 Divider()
-                
-                Text("Participantes").fontWeight(.bold)
-                Text("José Díaz")
-                
+
+                HStack {
+                    Text("Participantes").fontWeight(.bold)
+                    Spacer()
+                    Button {
+                        newParticipantName = ""
+                        showAddParticipant = true
+                    } label: {
+                        Label("Agregar", systemImage: "plus.circle.fill")
+                            .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if participants.isEmpty {
+                    Text("Sin participantes").foregroundColor(.secondary)
+                } else {
+                    ForEach(participants, id: \.self) { name in
+                        HStack {
+                            Image(systemName: "person.fill").foregroundColor(.gray)
+                            Text(name)
+                            Spacer()
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                if let idx = participants.firstIndex(of: name) {
+                                    participants.remove(at: idx)
+                                }
+                            } label: {
+                                Label("Eliminar", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+
                 Spacer()
-                
+
                 Button(action: {}) {
                     Text("Crear evento")
                         .fontWeight(.bold)
@@ -149,6 +186,36 @@ struct CreateEventView: View {
             }
             .padding()
             .background(Color(UIColor.systemBackground)) // Se adapta al modo claro/oscuro
+        }
+        .sheet(isPresented: $showAddParticipant) {
+            NavigationView {
+                Form {
+                    Section(footer: Text("Ingresa el nombre del participante")) {
+                        TextField("Nombre", text: $newParticipantName)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled(false)
+                            .submitLabel(.done)
+                    }
+                }
+                .navigationTitle("Nuevo participante")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancelar") { showAddParticipant = false }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Agregar") {
+                            let trimmed = newParticipantName.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !trimmed.isEmpty {
+                                participants.append(trimmed)
+                            }
+                            showAddParticipant = false
+                        }
+                        .disabled(newParticipantName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+            }
+            .presentationDetents([.fraction(0.3), .medium])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showPlacePicker) {
             NavigationView {
