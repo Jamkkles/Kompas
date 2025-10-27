@@ -47,4 +47,7 @@ struct MainAppView: View {
 
 #Preview {
     MainAppView()
+        .preferredColorScheme(.dark)
+        // <-- MODIFICACIÓN: Añadimos un manager de prueba al Preview
+        .environmentObject(LocationManager())
 }

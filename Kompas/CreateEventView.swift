@@ -5,8 +5,6 @@
 //  Created by Pablo Correa Mella on 12-10-25.
 //
 
-// CreateEventView.swift
-
 import SwiftUI
 import MapKit
 
@@ -31,280 +29,108 @@ struct Place: Identifiable, Equatable, Hashable {
 }
 
 struct CreateEventView: View {
-    @State private var selectedPlace: Place? = nil
-    @State private var showPlacePicker = false
-    @State private var selectedDate: Date = Date()
-    @State private var showDatePicker = false
-    @State private var selectedTime: Date = Date()
-    @State private var showTimePicker = false
-
-    @State private var descriptionText: String = ""
-    @FocusState private var isEditingDescription: Bool
-    @State private var participants: [String] = ["José Díaz"]
-    @State private var showAddParticipant: Bool = false
-    @State private var newParticipantName: String = ""
-
-    private let places: [Place] = [
-        Place(name: "Taqueria Maria", coordinate: CLLocationCoordinate2D(latitude: 37.7880, longitude: -122.4074)),
-        Place(name: "Café Buena Vista", coordinate: CLLocationCoordinate2D(latitude: 37.8067, longitude: -122.4200)),
-        Place(name: "Parque Dolores", coordinate: CLLocationCoordinate2D(latitude: 37.7596, longitude: -122.4269)),
-        Place(name: "Ferry Building", coordinate: CLLocationCoordinate2D(latitude: 37.7955, longitude: -122.3937))
-    ]
-
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7880, longitude: -122.4074), // SF MOMA area
-        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-    )
     
-    private var dateFormatter: DateFormatter {
-        let df = DateFormatter()
-        df.locale = Locale(identifier: "es_CL")
-        df.dateStyle = .long
-        df.timeStyle = .none
-        return df
-    }
+    // 1. CONECTA CON EL GPS (tiempo real)
+    @EnvironmentObject var locationManager: LocationManager
     
-    private var timeFormatter: DateFormatter {
-        let df = DateFormatter()
-        df.locale = Locale(identifier: "es_CL")
-        df.dateStyle = .none
-        df.timeStyle = .short
-        return df
-    }
+    // 2. REGIÓN DEL MAPA (Sintaxis Moderna)
+    // Usamos @State private var position para controlar el mapa
+    @State private var position: MapCameraPosition = .region(MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: -34.9833, longitude: -71.2333), // Centro inicial (Curicó)
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    ))
+    
+    // Variable para centrar el mapa solo una vez
+    @State private var hasCenteredMap = false
+    
+    // 3. DATOS DEL FORMULARIO (vacíos para personalizar)
+    @State private var eventName: String = ""
+    @State private var eventDescription: String = ""
+    @State private var eventDate: Date = Date()
+    @State private var eventParticipants: String = ""
+    
+    // 4. UBICACIÓN DEL EVENTO (el pin que pones al tocar)
+    @State private var eventCoordinate: CLLocationCoordinate2D?
 
     var body: some View {
-        VStack(spacing: 0) {
-            Map(coordinateRegion: $region)
+        NavigationView {
+            VStack(spacing: 0) {
+                
+                // 5. MAPREADER (para detectar toques)
+                MapReader { proxy in
+                    
+                    // 6. EL MAPA (SINTAXIS CORREGIDA)
+                    // Usamos Map(position: $position) que SÍ acepta un bloque de contenido
+                    Map(position: $position) {
+                        
+                        // Muestra el punto azul de tu ubicación
+                        UserAnnotation()
+                        
+                        // Dibuja el pin del evento SI el usuario ha tocado
+                        if let coordinate = eventCoordinate {
+                            Annotation("Nuevo Evento", coordinate: coordinate) {
+                                Image(systemName: "mappin.circle.fill")
+                                    .font(.title)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    }
+                    .onTapGesture { tapPosition in
+                        // 7. LÓGICA DEL TOQUE
+                        if let coordinate = proxy.convert(tapPosition, from: .local) {
+                            eventCoordinate = coordinate // Guarda la coordenada
+                            if eventName.isEmpty {
+                                eventName = "Nuevo Evento" // Pone un nombre por defecto
+                            }
+                        }
+                    }
+                }
                 .frame(height: UIScreen.main.bounds.height / 3)
-                .onChange(of: selectedPlace) { _, newValue in
-                    if let place = newValue {
-                        withAnimation {
-                            region.center = place.coordinate
-                        }
-                    }
-                }
-            
-            // Formulario para crear el evento
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Crear evento").font(.title2.bold())
-                Text("Agregar descripción").foregroundColor(.accentColor)
                 
-                Divider()
-                
-                HStack {
-                    Text("Destino")
-                    Spacer()
-                    Button(action: { showPlacePicker = true }) {
-                        HStack(spacing: 6) {
-                            Text(selectedPlace?.name ?? "Seleccionar…")
-                                .foregroundColor(.accentColor)
-                            Image(systemName: "chevron.right")
-                                .font(.footnote)
-                                .foregroundColor(.accentColor)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-                HStack {
-                    Text("Día")
-                    Spacer()
-                    Button(action: { showDatePicker = true }) {
-                        HStack(spacing: 6) {
-                            Text(dateFormatter.string(from: selectedDate))
-                                .foregroundColor(.accentColor)
-                            Image(systemName: "chevron.right")
-                                .font(.footnote)
-                                .foregroundColor(.accentColor)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-                HStack {
-                    Text("Hora")
-                    Spacer()
-                    Button(action: { showTimePicker = true }) {
-                        HStack(spacing: 6) {
-                            Text(timeFormatter.string(from: selectedTime))
-                                .foregroundColor(.accentColor)
-                            Image(systemName: "chevron.right")
-                                .font(.footnote)
-                                .foregroundColor(.accentColor)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-                Divider()
-
-                HStack {
-                    Text("Participantes").fontWeight(.bold)
-                    Spacer()
-                    Button {
-                        newParticipantName = ""
-                        showAddParticipant = true
-                    } label: {
-                        Label("Agregar", systemImage: "plus.circle.fill")
-                            .foregroundColor(.accentColor)
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                if participants.isEmpty {
-                    Text("Sin participantes").foregroundColor(.secondary)
-                } else {
-                    ForEach(participants, id: \.self) { name in
-                        HStack {
-                            Image(systemName: "person.fill").foregroundColor(.gray)
-                            Text(name)
-                            Spacer()
-                        }
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                if let idx = participants.firstIndex(of: name) {
-                                    participants.remove(at: idx)
-                                }
-                            } label: {
-                                Label("Eliminar", systemImage: "trash")
-                            }
-                        }
-                    }
-                }
-
-                Spacer()
-
-                Button(action: {}) {
-                    Text("Crear evento")
-                        .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-            }
-            .padding()
-            .background(Color(UIColor.systemBackground)) // Se adapta al modo claro/oscuro
-        }
-        .sheet(isPresented: $showAddParticipant) {
-            NavigationView {
+                // 8. FORMULARIO PERSONALIZABLE
                 Form {
-                    Section(footer: Text("Ingresa el nombre del participante")) {
-                        TextField("Nombre", text: $newParticipantName)
-                            .textInputAutocapitalization(.words)
-                            .autocorrectionDisabled(false)
-                            .submitLabel(.done)
+                    Section(header: Text("Detalles del Evento")) {
+                        TextField("Nombre del evento", text: $eventName)
+                        TextField("Descripción (opcional)", text: $eventDescription)
+                        DatePicker("Fecha y Hora", selection: $eventDate, displayedComponents: [.date, .hourAndMinute])
                     }
-                }
-                .navigationTitle("Nuevo participante")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancelar") { showAddParticipant = false }
+                    
+                    Section(header: Text("Participantes")) {
+                        TextField("Añadir participantes", text: $eventParticipants)
                     }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Agregar") {
-                            let trimmed = newParticipantName.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !trimmed.isEmpty {
-                                participants.append(trimmed)
-                            }
-                            showAddParticipant = false
+                    
+                    Section {
+                        Button(action: {
+                            // Lógica para guardar
+                            print("Guardando evento: \(eventName)")
+                        }) {
+                            Text("Crear evento")
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity, alignment: .center)
                         }
-                        .disabled(newParticipantName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(eventCoordinate == nil) // Desactivado si no hay pin
                     }
                 }
             }
-            .presentationDetents([.fraction(0.3), .medium])
-            .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showPlacePicker) {
-            NavigationView {
-                List(places) { place in
-                    Button(action: {
-                        selectedPlace = place
-                        region.center = place.coordinate
-                        showPlacePicker = false
-                    }) {
-                        HStack {
-                            Text(place.name)
-                            Spacer()
-                            if place == selectedPlace {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(.accentColor)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-                .navigationTitle("Seleccionar destino")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Cerrar") { showPlacePicker = false }
-                    }
+            .navigationTitle("Crear Evento")
+            .navigationBarTitleDisplayMode(.inline)
+            .ignoresSafeArea(edges: .bottom)
+            .onChange(of: locationManager.userLocation) { newLocation in
+                // 9. LÓGICA DE TIEMPO REAL
+                // Centra la "posición" del mapa (solo la primera vez)
+                if let newLocation, !hasCenteredMap {
+                    position = .region(MKCoordinateRegion(
+                        center: newLocation,
+                        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                    ))
+                    hasCenteredMap = true
                 }
             }
         }
-        .sheet(isPresented: $showDatePicker) {
-            NavigationView {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        DatePicker(
-                            "Seleccionar día",
-                            selection: $selectedDate,
-                            displayedComponents: [.date]
-                        )
-                        .datePickerStyle(.graphical)
-                        .padding(.horizontal)
-                        .padding(.top)
-                    }
-                }
-                .ignoresSafeArea(.keyboard)
-                .navigationTitle("Elegir día")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Listo") { showDatePicker = false }
-                    }
-                }
-            }
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showTimePicker) {
-            NavigationView {
-                VStack(alignment: .leading) {
-                    DatePicker(
-                        "Seleccionar hora",
-                        selection: $selectedTime,
-                        displayedComponents: [.hourAndMinute]
-                    )
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .padding()
-
-                    Spacer()
-                }
-                .navigationTitle("Elegir hora")
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Listo") { showTimePicker = false }
-                    }
-                }
-            }
-            .presentationDetents([.fraction(0.35), .medium])
-            .presentationDragIndicator(.visible)
-        }
-        .onAppear {
-            if selectedPlace == nil {
-                selectedPlace = places.first
-                if let place = selectedPlace {
-                    region.center = place.coordinate
-                }
-            }
-        }
-        .ignoresSafeArea(edges: .top)
     }
 }
 
 #Preview {
     CreateEventView()
+        .environmentObject(LocationManager()) // No olvides el environmentObject para el Preview
 }
