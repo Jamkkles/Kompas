@@ -19,21 +19,30 @@ struct FamilyMember: Identifiable {
 }
 
 struct FamilyMapView: View {
+    
+    // 1. <-- MODIFICACIÓN: Leemos el LocationManager desde el entorno
+    @EnvironmentObject var locationManager: LocationManager
+    
     @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.77, longitude: -122.43), // San Francisco
+        // Damos un valor inicial cualquiera, se centrará automáticamente
+        center: CLLocationCoordinate2D(latitude: -34.9833, longitude: -71.2333), // Curicó
         span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
     )
     
+    // 2. <-- MODIFICACIÓN: Variable para centrar el mapa solo una vez
+    @State private var hasCenteredMap = false
+    
     let members = [
-        FamilyMember(name: "Benjamín Puebla", locationInfo: "Curicó • Batería", coordinate: .init(latitude: 37.7749, longitude: -122.4194)),
-        FamilyMember(name: "José Díaz", locationInfo: "Santiago • Batería", coordinate: .init(latitude: 37.78, longitude: -122.43)),
-        FamilyMember(name: "Pablo Correa", locationInfo: "Romeral • Batería", coordinate: .init(latitude: 37.76, longitude: -122.42))
+        FamilyMember(name: "Benjamín Puebla", locationInfo: "Curicó • Batería", coordinate: .init(latitude: -34.98, longitude: -71.23)),
+        FamilyMember(name: "José Díaz", locationInfo: "Santiago • Batería", coordinate: .init(latitude: -33.45, longitude: -70.66)),
+        FamilyMember(name: "Pablo Correa", locationInfo: "Romeral • Batería", coordinate: .init(latitude: -34.96, longitude: -71.20))
     ]
 
     var body: some View {
         NavigationView {
             ZStack(alignment: .bottom) {
-                Map(coordinateRegion: $region, annotationItems: members) { member in
+                // 3. <-- MODIFICACIÓN: Añadimos 'showsUserLocation: true'
+                Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: members) { member in
                     MapMarker(coordinate: member.coordinate, tint: .cyan)
                 }
                 .ignoresSafeArea()
@@ -63,6 +72,13 @@ struct FamilyMapView: View {
             }
             .navigationTitle("Familia")
             .navigationBarHidden(true)
+            // 4. <-- MODIFICACIÓN: Observamos cambios en la ubicación
+            .onChange(of: locationManager.userLocation) { newLocation in
+                if let newLocation, !hasCenteredMap {
+                    region.center = newLocation
+                    hasCenteredMap = true
+                }
+            }
         }
     }
 }
@@ -70,4 +86,6 @@ struct FamilyMapView: View {
 #Preview {
     FamilyMapView()
         .preferredColorScheme(.dark)
+        // 5. <-- MODIFICACIÓN: Añadimos un manager de prueba al Preview
+        .environmentObject(LocationManager())
 }

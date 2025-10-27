@@ -5,70 +5,112 @@
 //  Created by Pablo Correa Mella on 12-10-25.
 //
 
-// CreateEventView.swift
-
 import SwiftUI
 import MapKit
 
 struct CreateEventView: View {
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7880, longitude: -122.4074), // SF MOMA area
-        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-    )
+    
+    // 1. CONECTA CON EL GPS (tiempo real)
+    @EnvironmentObject var locationManager: LocationManager
+    
+    // 2. REGIÓN DEL MAPA (Sintaxis Moderna)
+    // Usamos @State private var position para controlar el mapa
+    @State private var position: MapCameraPosition = .region(MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: -34.9833, longitude: -71.2333), // Centro inicial (Curicó)
+        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    ))
+    
+    // Variable para centrar el mapa solo una vez
+    @State private var hasCenteredMap = false
+    
+    // 3. DATOS DEL FORMULARIO (vacíos para personalizar)
+    @State private var eventName: String = ""
+    @State private var eventDescription: String = ""
+    @State private var eventDate: Date = Date()
+    @State private var eventParticipants: String = ""
+    
+    // 4. UBICACIÓN DEL EVENTO (el pin que pones al tocar)
+    @State private var eventCoordinate: CLLocationCoordinate2D?
 
     var body: some View {
-        VStack(spacing: 0) {
-            Map(coordinateRegion: $region)
+        NavigationView {
+            VStack(spacing: 0) {
+                
+                // 5. MAPREADER (para detectar toques)
+                MapReader { proxy in
+                    
+                    // 6. EL MAPA (SINTAXIS CORREGIDA)
+                    // Usamos Map(position: $position) que SÍ acepta un bloque de contenido
+                    Map(position: $position) {
+                        
+                        // Muestra el punto azul de tu ubicación
+                        UserAnnotation()
+                        
+                        // Dibuja el pin del evento SI el usuario ha tocado
+                        if let coordinate = eventCoordinate {
+                            Annotation("Nuevo Evento", coordinate: coordinate) {
+                                Image(systemName: "mappin.circle.fill")
+                                    .font(.title)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    }
+                    .onTapGesture { tapPosition in
+                        // 7. LÓGICA DEL TOQUE
+                        if let coordinate = proxy.convert(tapPosition, from: .local) {
+                            eventCoordinate = coordinate // Guarda la coordenada
+                            if eventName.isEmpty {
+                                eventName = "Nuevo Evento" // Pone un nombre por defecto
+                            }
+                        }
+                    }
+                }
                 .frame(height: UIScreen.main.bounds.height / 3)
-            
-            // Formulario para crear el evento
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Crear evento").font(.title2.bold())
-                Text("Agregar descripción").foregroundColor(.accentColor)
                 
-                Divider()
-                
-                HStack {
-                    Text("Taqueria Maria")
-                    Spacer()
-                }
-                
-                HStack {
-                    Text("Día")
-                    Spacer()
-                    Text("22 de septiembre").foregroundColor(.gray)
-                }
-                
-                HStack {
-                    Text("Hora")
-                    Spacer()
-                    Text("16:00 horas").foregroundColor(.gray)
-                }
-                
-                Divider()
-                
-                Text("Participantes").fontWeight(.bold)
-                Text("José Díaz")
-                
-                Spacer()
-                
-                Button(action: {}) {
-                    Text("Crear evento")
-                        .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                // 8. FORMULARIO PERSONALIZABLE
+                Form {
+                    Section(header: Text("Detalles del Evento")) {
+                        TextField("Nombre del evento", text: $eventName)
+                        TextField("Descripción (opcional)", text: $eventDescription)
+                        DatePicker("Fecha y Hora", selection: $eventDate, displayedComponents: [.date, .hourAndMinute])
+                    }
+                    
+                    Section(header: Text("Participantes")) {
+                        TextField("Añadir participantes", text: $eventParticipants)
+                    }
+                    
+                    Section {
+                        Button(action: {
+                            // Lógica para guardar
+                            print("Guardando evento: \(eventName)")
+                        }) {
+                            Text("Crear evento")
+                                .fontWeight(.bold)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                        .disabled(eventCoordinate == nil) // Desactivado si no hay pin
+                    }
                 }
             }
-            .padding()
-            .background(Color(UIColor.systemBackground)) // Se adapta al modo claro/oscuro
+            .navigationTitle("Crear Evento")
+            .navigationBarTitleDisplayMode(.inline)
+            .ignoresSafeArea(edges: .bottom)
+            .onChange(of: locationManager.userLocation) { newLocation in
+                // 9. LÓGICA DE TIEMPO REAL
+                // Centra la "posición" del mapa (solo la primera vez)
+                if let newLocation, !hasCenteredMap {
+                    position = .region(MKCoordinateRegion(
+                        center: newLocation,
+                        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                    ))
+                    hasCenteredMap = true
+                }
+            }
         }
-        .ignoresSafeArea(edges: .top)
     }
 }
 
 #Preview {
     CreateEventView()
+        .environmentObject(LocationManager()) // No olvides el environmentObject para el Preview
 }
