@@ -11,42 +11,38 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            // Color de fondo oscuro.
-            Color(red: 0.1, green: 0.1, blue: 0.1).ignoresSafeArea()
+            Color.white.ignoresSafeArea()
 
             VStack(spacing: 20) {
                 // Asegúrate de tener una imagen llamada "kompasLogo" en Assets.xcassets
-                // Image("kompasLogo")
-                // Si no tienes el logo, puedes usar un ícono del sistema como placeholder:
                 Image("kompasLogo") // Asegúrate de tener una imagen llamada "kompasLogo" en tus assets.
-                                   .resizable()
-                                   .scaledToFit()
-                                   .frame(width: 250)
-                                  
-
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 250)
+                    
                 Text("Inicio de Sesión")
                     .font(.largeTitle.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                     
-
                 Text("Ingresa tu usuario y contraseña para iniciar sesión")
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.bottom, 30)
 
                 TextField("Usuario", text: $username)
                     .padding()
-                    .background(Color.black.opacity(0.5))
+                    // .white o Color(.systemGray6) son buenas opciones.
+                    .background(Color(.systemGray6))
                     .cornerRadius(10)
-                    .foregroundColor(.white)
-                    .tint(.white) // Color del cursor
+                    .foregroundColor(.primary)
+                    .tint(.gray) // Color del cursor
 
                 SecureField("Contraseña", text: $password)
                     .padding()
-                    .background(Color.black.opacity(0.5))
+                    .background(Color(.systemGray6))
                     .cornerRadius(10)
-                    .foregroundColor(.white)
-                    .tint(.white)
+                    .foregroundColor(.primary)
+                    .tint(.gray)
 
                 Button(action: {
                     // Simula un inicio de sesión exitoso.
@@ -58,8 +54,8 @@ struct LoginView: View {
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.accentColor) // Usa el color de acento del proyecto.
-                        .foregroundColor(.white)
+                        .background(Color.accentColor) // Usar el color de acento está bien.
+                        .foregroundColor(.white) // Texto blanco sobre el botón de color es estándar.
                         .cornerRadius(10)
                 }
                 .padding(.top, 20)
@@ -67,6 +63,7 @@ struct LoginView: View {
                 Spacer()
             }
             .padding(.horizontal, 30)
+            .preferredColorScheme(.light)
         }
     }
 }
