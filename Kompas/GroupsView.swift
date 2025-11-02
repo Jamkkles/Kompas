@@ -5,11 +5,9 @@
 //  Created by Pablo Correa Mella on 12-10-25.
 //
 
-// GroupsView.swift
-
 import SwiftUI
 
-// Modelo de datos para un Grupo (puedes moverlo a su propio archivo si quieres).
+// Modelo de datos para un Grupo
 struct Group: Identifiable {
     let id = UUID()
     let name: String
@@ -18,7 +16,7 @@ struct Group: Identifiable {
 }
 
 struct GroupsView: View {
-    // Datos de ejemplo.
+    // Datos de ejemplo
     let groups = [
         Group(name: "Familia", members: "Mamá | Papá | Hermana", lastUpdate: "12:09"),
         Group(name: "Amigos", members: "Pablo | Nelson | José", lastUpdate: "12:09"),
@@ -29,31 +27,36 @@ struct GroupsView: View {
         NavigationView {
             List(groups) { group in
                 GroupRow(group: group)
-                    .listRowBackground(Color.black)
+                    .listRowBackground(Color.white)
                     .listRowSeparator(.hidden)
             }
             .listStyle(.plain)
             .navigationTitle("Grupos")
-            .background(Color.black)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .background(Color.white)
         }
     }
 }
 
-// Vista para cada fila de la lista.
+// Vista para cada fila de la lista
 struct GroupRow: View {
     let group: Group
     var body: some View {
         HStack(spacing: 15) {
             Image(systemName: "person.2.fill")
                 .font(.title2)
-                .foregroundColor(.white)
+                .foregroundColor(.black)
             VStack(alignment: .leading, spacing: 4) {
-                Text(group.name).fontWeight(.bold).foregroundColor(.white)
-                Text(group.members).font(.caption).foregroundColor(.gray)
+                Text(group.name)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+                Text(group.members)
+                    .font(.caption)
+                    .foregroundColor(.gray)
             }
             Spacer()
-            Text(group.lastUpdate).font(.subheadline).foregroundColor(.gray)
+            Text(group.lastUpdate)
+                .font(.subheadline)
+                .foregroundColor(.gray)
         }
         .padding(.vertical, 8)
     }
@@ -61,5 +64,5 @@ struct GroupRow: View {
 
 #Preview {
     GroupsView()
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(.light)
 }

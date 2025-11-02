@@ -8,6 +8,26 @@
 import SwiftUI
 import MapKit
 
+struct Place: Identifiable, Equatable, Hashable {
+    let id: UUID
+    let name: String
+    let coordinate: CLLocationCoordinate2D
+
+    init(id: UUID = UUID(), name: String, coordinate: CLLocationCoordinate2D) {
+        self.id = id
+        self.name = name
+        self.coordinate = coordinate
+    }
+
+    static func == (lhs: Place, rhs: Place) -> Bool {
+        return lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
 struct CreateEventView: View {
     
     // 1. CONECTA CON EL GPS (tiempo real)

@@ -45,9 +45,9 @@ struct FamilyMapView: View {
                 Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: members) { member in
                     MapMarker(coordinate: member.coordinate, tint: .cyan)
                 }
-                .ignoresSafeArea()
+                .ignoresSafeArea(.all, edges: .top)
 
-                VStack {
+                VStack(spacing: 0) {
                     Text("Familia")
                         .font(.title.bold())
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -63,13 +63,16 @@ struct FamilyMapView: View {
                             Spacer()
                             Image(systemName: "message.fill").foregroundColor(.gray)
                         }
+                        .listRowBackground(Color.white)
                     }
                     .listStyle(.plain)
+                    .padding(.bottom, 0)
                 }
                 .frame(maxHeight: UIScreen.main.bounds.height / 2.5)
-                .background(.regularMaterial) // Efecto translúcido
+                .background(Color.white)
                 .cornerRadius(20)
             }
+            .ignoresSafeArea(.all, edges: .bottom)
             .navigationTitle("Familia")
             .navigationBarHidden(true)
             // 4. <-- MODIFICACIÓN: Observamos cambios en la ubicación

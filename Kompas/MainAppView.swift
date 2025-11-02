@@ -14,7 +14,7 @@ struct MainAppView: View {
         // Personaliza la apariencia de la barra de pestañas para que sea oscura.
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor.black
+        appearance.backgroundColor = UIColor.white
         UITabBar.appearance().standardAppearance = appearance
         UITabBar.appearance().scrollEdgeAppearance = appearance
     }
@@ -28,7 +28,7 @@ struct MainAppView: View {
 
             FamilyMapView()
                 .tabItem {
-                    Label("Mapa Familia", systemImage: "map.fill")
+                    Label("Mapa", systemImage: "map.fill")
                 }
             
             SetDestinationView()
@@ -41,7 +41,7 @@ struct MainAppView: View {
                     Label("Crear Evento", systemImage: "calendar.badge.plus")
                 }
         }
-        .tint(.white) // Color del ícono y texto seleccionado en la TabView.
+        .tint(.black) // Color del ícono y texto seleccionado en la TabView.
     }
 }
 
