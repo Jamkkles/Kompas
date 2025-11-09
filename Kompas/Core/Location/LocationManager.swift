@@ -1,12 +1,3 @@
-//
-//  LocationManager.swift
-//  Kompas
-//
-//  Created by Pablo Correa Mella on 26-10-25.
-//
-
-// LocationManager.swift
-
 import Foundation
 import CoreLocation
 
