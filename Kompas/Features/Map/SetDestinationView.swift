@@ -1,12 +1,3 @@
-//
-//  SetDestinationView.swift
-//  Kompas
-//
-//  Created by Pablo Correa Mella on 12-10-25.
-//
-
-// SetDestinationView.swift
-
 import SwiftUI
 import MapKit
 

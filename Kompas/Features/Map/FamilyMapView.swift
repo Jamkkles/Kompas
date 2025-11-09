@@ -1,12 +1,3 @@
-//
-//  FamilyMapView.swift
-//  Kompas
-//
-//  Created by Pablo Correa Mella on 12-10-25.
-//
-
-// FamilyMapView.swift
-
 import SwiftUI
 import MapKit
 
