@@ -132,9 +132,18 @@ final class FirebaseAuthRepository {
     // MARK: - Current user mapper
     fileprivate func mapCurrentUser() async throws -> User {
         guard let u = Auth.auth().currentUser else {
-            throw NSError(domain: "FirebaseAuth", code: -10, userInfo: [NSLocalizedDescriptionKey: "No hay usuario autenticado"])
+            throw NSError(
+                domain: "FirebaseAuth",
+                code: -10,
+                userInfo: [NSLocalizedDescriptionKey: "No hay usuario autenticado"]
+            )
         }
         let name = u.displayName ?? u.email ?? "Usuario"
-        return User(id: u.uid, email: u.email ?? "", name: name)
+        return User(
+            id: u.uid,
+            email: u.email ?? "",
+            name: name,
+            photoURL: u.photoURL        // <- aquí queda lista para el mapa y el perfil
+        )
     }
 }

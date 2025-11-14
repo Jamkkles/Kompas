@@ -1,7 +1,7 @@
 import SwiftUI
 import MapKit
 
-// Modelo para un miembro de la familia.
+// Modelo simple para un miembro de la familia.
 struct FamilyMember: Identifiable {
     let id = UUID()
     let name: String
@@ -10,76 +10,95 @@ struct FamilyMember: Identifiable {
 }
 
 struct FamilyMapView: View {
-    
-    // 1. <-- MODIFICACIÓN: Leemos el LocationManager desde el entorno
     @EnvironmentObject var locationManager: LocationManager
-    
-    @State private var region = MKCoordinateRegion(
-        // Damos un valor inicial cualquiera, se centrará automáticamente
-        center: CLLocationCoordinate2D(latitude: -34.9833, longitude: -71.2333), // Curicó
+
+    @State private var camera: MapCameraPosition = .automatic
+    @State private var fallbackRegion: MKCoordinateRegion = .init(
+        center: CLLocationCoordinate2D(latitude: -34.985, longitude: -71.239),
         span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
     )
-    
-    // 2. <-- MODIFICACIÓN: Variable para centrar el mapa solo una vez
-    @State private var hasCenteredMap = false
-    
-    let members = [
-        FamilyMember(name: "Benjamín Puebla", locationInfo: "Curicó • Batería", coordinate: .init(latitude: -34.98, longitude: -71.23)),
-        FamilyMember(name: "José Díaz", locationInfo: "Santiago • Batería", coordinate: .init(latitude: -33.45, longitude: -70.66)),
-        FamilyMember(name: "Pablo Correa", locationInfo: "Romeral • Batería", coordinate: .init(latitude: -34.96, longitude: -71.20))
+
+    // Datos de ejemplo
+    private let members: [FamilyMember] = [
+        .init(
+            name: "Mamá",
+            locationInfo: "Casa",
+            coordinate: CLLocationCoordinate2D(latitude: -34.985, longitude: -71.239)
+        ),
+        .init(
+            name: "Papá",
+            locationInfo: "Trabajo",
+            coordinate: CLLocationCoordinate2D(latitude: -34.98, longitude: -71.25)
+        )
     ]
 
     var body: some View {
-        NavigationView {
-            ZStack(alignment: .bottom) {
-                // 3. <-- MODIFICACIÓN: Añadimos 'showsUserLocation: true'
-                Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: members) { member in
-                    MapMarker(coordinate: member.coordinate, tint: .cyan)
-                }
-                .ignoresSafeArea(.all, edges: .top)
-
-                VStack(spacing: 0) {
-                    Text("Familia")
-                        .font(.title.bold())
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding([.top, .horizontal])
-
-                    List(members) { member in
-                        HStack {
-                            Image(systemName: "person.circle.fill").font(.largeTitle).foregroundColor(.gray)
-                            VStack(alignment: .leading) {
-                                Text(member.name).fontWeight(.semibold)
-                                Text(member.locationInfo).font(.caption).foregroundColor(.gray)
-                            }
-                            Spacer()
-                            Image(systemName: "message.fill").foregroundColor(.gray)
+        ZStack {
+            Map(position: $camera) {
+                ForEach(members) { member in
+                    Annotation(member.name, coordinate: member.coordinate) {
+                        VStack(spacing: 4) {
+                            Circle()
+                                .fill(Brand.tint)
+                                .frame(width: 28, height: 28)
+                                .overlay(
+                                    Text(initials(member.name))
+                                        .font(.caption2.bold())
+                                        .foregroundStyle(.white)
+                                )
+                            Image(systemName: "triangle.fill")
+                                .font(.system(size: 8))
+                                .foregroundStyle(Brand.tint)
+                                .rotationEffect(.degrees(180))
+                                .offset(y: -6)
                         }
-                        .listRowBackground(Color.white)
                     }
-                    .listStyle(.plain)
-                    .padding(.bottom, 0)
                 }
-                .frame(maxHeight: UIScreen.main.bounds.height / 2.5)
-                .background(Color.white)
-                .cornerRadius(20)
             }
-            .ignoresSafeArea(.all, edges: .bottom)
-            .navigationTitle("Familia")
-            .navigationBarHidden(true)
-            // 4. <-- MODIFICACIÓN: Observamos cambios en la ubicación
-            .onChange(of: locationManager.userLocation) { newLocation in
-                if let newLocation, !hasCenteredMap {
-                    region.center = newLocation
-                    hasCenteredMap = true
+            .ignoresSafeArea()
+
+            VStack {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Mi familia")
+                            .font(.headline)
+                        Text("Ejemplo de vista de mapa familiar")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
                 }
+                .padding()
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                .padding()
+
+                Spacer()
             }
         }
+        .onAppear {
+            if let coord = locationManager.userLocation {
+                camera = .region(
+                    MKCoordinateRegion(
+                        center: coord,
+                        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+                    )
+                )
+            } else {
+                camera = .region(fallbackRegion)
+            }
+        }
+    }
+
+    private func initials(_ name: String) -> String {
+        let parts = name.split(separator: " ")
+        let first = parts.first?.prefix(1) ?? Substring("")
+        let second = parts.dropFirst().first?.prefix(1) ?? Substring("")
+        let result = "\(first)\(second)"
+        return result.isEmpty ? String(name.prefix(2)) : result
     }
 }
 
 #Preview {
     FamilyMapView()
-        .preferredColorScheme(.dark)
-        // 5. <-- MODIFICACIÓN: Añadimos un manager de prueba al Preview
         .environmentObject(LocationManager())
 }

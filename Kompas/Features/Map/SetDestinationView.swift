@@ -1,71 +1,59 @@
 import SwiftUI
 import MapKit
+import Combine
 
 struct SetDestinationView: View {
-    
-    // 1. <-- MODIFICACIÓN: Leemos el LocationManager desde el entorno
     @EnvironmentObject var locationManager: LocationManager
-    
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: -34.9833, longitude: -71.2333), // Curicó
-        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-    )
-    
-    // 2. <-- MODIFICACIÓN: Variable para centrar el mapa solo una vez
-    @State private var hasCenteredMap = false
+
+    @State private var camera: MapCameraPosition = .automatic
+    @State private var destination: CLLocationCoordinate2D?
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // 3. <-- MODIFICACIÓN: Añadimos 'showsUserLocation: true'
-            Map(coordinateRegion: $region, showsUserLocation: true)
-                .ignoresSafeArea()
-            
-            // Tarjeta de información inferior
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Taqueria Maria").font(.title2.bold())
-                    Spacer()
-                    Image(systemName: "xmark.circle.fill").foregroundColor(.gray)
+        ZStack {
+            // Mapa principal
+            Map(position: $camera) {
+                if let d = destination {
+                    Marker("Destino", coordinate: d)
                 }
-                Text("Estado 370, Curicó").foregroundColor(.gray)
-                
-                HStack {
-                    Image(systemName: "face.smiling")
-                    Text("Recomendado")
-                }
-                .font(.caption)
-                .padding(8)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(15)
-
-                Button(action: {}) {
-                    Text("Fijar destino")
-                        .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(.black)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .padding(.top)
             }
-            .padding(20)
-            .background(.thinMaterial)
-            .cornerRadius(20)
-            .padding()
+            .mapControls {
+                MapUserLocationButton()
+                MapCompass()
+            }
+            .ignoresSafeArea()
+
+            // Botón inferior para usar ubicación actual
+            VStack {
+                Spacer()
+                Button {
+                    if let c = locationManager.userLocation {
+                        destination = c
+                        camera = .region(.init(center: c,
+                                               span: .init(latitudeDelta: 0.03,
+                                                           longitudeDelta: 0.03)))
+                    }
+                } label: {
+                    Label("Usar mi ubicación", systemImage: "location.fill")
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Capsule().fill(.ultraThinMaterial))
+                }
+                .padding(.bottom, 20)
+            }
         }
-        // 4. <-- MODIFICACIÓN: Observamos cambios en la ubicación
-        .onChange(of: locationManager.userLocation) { newLocation in
-            if let newLocation, !hasCenteredMap {
-                region.center = newLocation
-                hasCenteredMap = true
+        // ✅ Observa el publisher del LocationManager y reacciona a cambios reales
+        .onReceive(
+            locationManager.$userLocation
+                .compactMap { $0 } // solo valores no-nil
+                .removeDuplicates(by: { a, b in
+                    a.latitude == b.latitude && a.longitude == b.longitude
+                })
+        ) { coord in
+            if destination == nil {
+                camera = .region(.init(center: coord,
+                                       span: .init(latitudeDelta: 0.06,
+                                                   longitudeDelta: 0.06)))
             }
         }
     }
-}
-
-#Preview {
-    SetDestinationView()
-        // 5. <-- MODIFICACIÓN: Añadimos un manager de prueba al Preview
-        .environmentObject(LocationManager())
 }
