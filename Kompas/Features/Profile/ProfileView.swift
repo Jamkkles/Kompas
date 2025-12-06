@@ -9,6 +9,8 @@ struct ProfileView: View {
     @State private var showNotifications = false
     @State private var showPrivacy = false
     @State private var showSettings = false
+    @State private var showRouteHistory = false
+
 
     var body: some View {
         NavigationView {
@@ -57,6 +59,9 @@ struct ProfileView: View {
                 }
             } message: {
                 Text("¿Estás seguro de que quieres cerrar sesión?")
+            }
+            .sheet(isPresented: $showRouteHistory) { // Presentar el historial de rutas como hoja modal
+                RouteHistoryView()
             }
             .sheet(isPresented: $showEditProfile) {
                 editProfileSheet
@@ -201,6 +206,17 @@ struct ProfileView: View {
                 showNotifications = true
             }
             
+            Divider()
+                .padding(.leading, 56)
+
+            ProfileOptionRow(
+                icon: "clock.arrow.circlepath", // Icono para el historial de rutas
+                title: "Historial de Rutas",
+                iconColor: .blue
+            ) {
+                showRouteHistory = true // Mostrar la hoja modal del historial de rutas
+            }
+
             Divider()
                 .padding(.leading, 56)
             
