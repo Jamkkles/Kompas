@@ -23,6 +23,7 @@ struct MapHomeView: View {
     @StateObject private var presenceRepo = PresenceRepository()
     @StateObject private var searchVM = MapSearchVM()
 
+
     @State private var selectedGroup: UserGroup?
     @State private var showGroupPicker = false
     @State private var showSearch = false
@@ -34,6 +35,7 @@ struct MapHomeView: View {
     @State private var sheetPosition: SheetPosition = .medium
     @State private var mapMode: MapVisualMode = .standard
     @State private var showMapModes = false
+    @State private var mapHeading: CLLocationDirection = 0
 
     var body: some View {
         GeometryReader { proxy in
@@ -194,7 +196,7 @@ struct MapHomeView: View {
             // Yo
             if let me = locationManager.userLocation {
                 Annotation("Yo", coordinate: me) {
-                    MePin(user: session.user)
+                    MePin(user: session.user, heading: locationManager.deviceHeading, mapHeading: mapHeading)
                 }
             }
 
@@ -215,108 +217,110 @@ struct MapHomeView: View {
             }
         }
         .mapStyle(mapMode == .standard ? .standard : .imagery)
+        .onMapCameraChange { context in
+            self.mapHeading = context.camera.heading
+        }
     }
 
     // MARK: - Controles flotantes
 
     private var mapControls: some View {
-            // Usamos Container para optimizar rendimiento y permitir blending
-            GlassEffectContainer(spacing: 12) {
-                VStack(spacing: 12) {
-                    Button {
-                        showMapModes = true
-                    } label: {
-                        Image(systemName: "map")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 44, height: 44)
-                            // APLICACIÓN: Forma circular e interactiva
-                            .glassEffect(.regular.interactive(), in: .circle)
-                    }
-
-                    Button {
-                        if let coord = locationManager.userLocation {
-                            searchedLocation = nil
-                            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                                camera = .region(MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "location.fill")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 44, height: 44)
-                            // APLICACIÓN: Forma circular e interactiva
-                            .glassEffect(.regular.interactive(), in: .circle)
+        VStack(spacing: 12) {
+            Button {
+                showMapModes = true
+            } label: {
+                Image(systemName: "map")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle().fill(.ultraThinMaterial)
+                    )
+            }
+            .clipShape(Circle())
+            
+            Button {
+                if let coord = locationManager.userLocation {
+                    searchedLocation = nil
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                        camera = .region(MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
                     }
                 }
+            } label: {
+                Image(systemName: "location.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle().fill(.ultraThinMaterial)
+                    )
             }
+            .clipShape(Circle())
         }
+        .padding(8)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
 
     // MARK: - Top bar simplificada
     private var topBar: some View {
-            GlassEffectContainer(spacing: 12) {
-                HStack(spacing: 12) {
-                    // Grupo - SOLO NOMBRE
-                    Button {
-                        showGroupPicker = true
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "person.3.fill")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(Brand.tint)
-                            
-                            Text(selectedGroup?.name ?? "Seleccionar")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                            
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 11)
-                        // APLICACIÓN: Cápsula por defecto, interactiva
-                        .glassEffect(.regular.interactive())
-                    }
-
-                    Spacer()
-
-                    // Buscar
-                    Button {
-                        showSearch = true
-                    } label: {
-                        HStack(spacing: 8) {
-                            ZStack {
-                                Circle()
-                                    .fill(Brand.tint.opacity(0.15))
-                                    .frame(width: 32, height: 32)
-
-                                Image(systemName: "magnifyingglass")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Brand.tint)
-                            }
-
-                            Text("Buscar")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(.primary)
-                        }
-                        .padding(.leading, 8)
-                        .padding(.trailing, 16)
-                        .padding(.vertical, 8)
-                        // APLICACIÓN: Cápsula por defecto, interactiva
-                        .glassEffect(.regular.interactive())
-                    }
+        HStack(spacing: 12) {
+            // Grupo - SOLO NOMBRE
+            Button {
+                showGroupPicker = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.3.fill")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Brand.tint)
+                    
+                    Text(selectedGroup?.name ?? "Seleccionar")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.secondary)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 11)
+                .background(.ultraThinMaterial, in: Capsule())
+            }
+
+            Spacer()
+
+            // Buscar
+            Button {
+                showSearch = true
+            } label: {
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Brand.tint.opacity(0.15))
+                            .frame(width: 32, height: 32)
+
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Brand.tint)
+                    }
+
+                    Text("Buscar")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.leading, 8)
+                .padding(.trailing, 16)
+                .padding(.vertical, 8)
+                .background(.ultraThinMaterial, in: Capsule())
             }
         }
+    }
 
     // MARK: - Bottom sheet
 
     @ViewBuilder
-        private func membersBottomSheet(totalHeight: CGFloat, safeTop: CGFloat, safeBottom: CGFloat) -> some View {
-            let height = sheetHeight(totalHeight: totalHeight, safeTop: safeTop, safeBottom: safeBottom)
+    private func membersBottomSheet(totalHeight: CGFloat, safeTop: CGFloat, safeBottom: CGFloat) -> some View {
+        let height = sheetHeight(totalHeight: totalHeight, safeTop: safeTop, safeBottom: safeBottom)
 
         VStack(spacing: 0) {
             HStack {
@@ -426,7 +430,7 @@ struct MapHomeView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: height, alignment: .top)
-        .glassEffect(in: .rect(cornerRadius: 26))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 26))
         .gesture(
             DragGesture()
                 .onEnded { value in
@@ -464,9 +468,11 @@ private struct SearchedLocationPin: View {
 
 private struct MePin: View {
     let user: User?
+    let heading: CLLocationDirection
+    let mapHeading: CLLocationDirection
 
     var body: some View {
-        VStack(spacing: 2) {
+        ZStack {
             if let user = user, let url = user.photoURL {
                 AsyncImage(url: url) { img in
                     img.resizable().scaledToFill()
@@ -509,11 +515,14 @@ private struct MePin: View {
                     .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
 
-            Image(systemName: "arrowtriangle.down.fill")
-                .font(.system(size: 10))
-                .foregroundStyle(.white)
-                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                .offset(y: -4)
+            ZStack {
+                Image(systemName: "arrowtriangle.up.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                    .offset(y: -25)
+            }
+            .rotationEffect(.degrees(heading - mapHeading))
         }
     }
 }
@@ -601,7 +610,7 @@ private struct MemberRowCompact: View {
     }
 
     private func initials(_ name: String) -> String {
-        let parts = name.split(separator: " ")
+        let parts = name.split(separator:  " ")
         let first = parts.first?.prefix(1) ?? ""
         let second = parts.dropFirst().first?.prefix(1) ?? ""
         return "\(first)\(second)"
@@ -991,10 +1000,7 @@ private struct EnhancedGroupCard: View {
                 }
             }
             .padding(16)
-            .glassEffect(
-                isSelected ? .regular.tint(Brand.tint.opacity(0.1)).interactive() : .regular.interactive(),
-                in: .rect(cornerRadius: 20)
-            )
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(.plain)
     }
@@ -1079,11 +1085,12 @@ private struct EnhancedMapModeButton: View {
                         .foregroundStyle(isSelected ? Brand.tint : .secondary)
                         .frame(height: 90)
                         .frame(maxWidth: .infinity)
-                        .glassEffect(
-                            isSelected ? .regular.tint(Brand.tint.opacity(0.2)).interactive() : .regular.interactive(),
-                            in: .rect(cornerRadius: 16)
-                        )
                 }
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Brand.tint.opacity(isSelected ? 0.2 : 0))
+                )
                 
                 VStack(spacing: 3) {
                     Text(title)
@@ -1099,6 +1106,7 @@ private struct EnhancedMapModeButton: View {
         .buttonStyle(.plain)
     }
 }
+
 #Preview {
     MapHomeView()
         .environmentObject(SessionStore.shared)
