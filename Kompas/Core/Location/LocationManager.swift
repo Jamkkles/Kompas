@@ -4,6 +4,7 @@ import CoreLocation
 final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var userLocation: CLLocationCoordinate2D?
     @Published var deviceHeading: CLLocationDirection = 0
+    @Published var speed: CLLocationSpeed = 0
     private let manager = CLLocationManager()
 
     override init() {
@@ -21,6 +22,9 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         guard let last = locations.last else { return }
         Task { @MainActor in
             self.userLocation = last.coordinate
+            if last.speed >= 0 {
+                self.speed = last.speed
+            }
         }
     }
     

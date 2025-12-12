@@ -78,6 +78,18 @@ struct MapHomeView: View {
                         safeBottom: safeBottom
                     )
                 }
+
+                // VELOCÍMETRO
+                VStack {
+                    Spacer()
+                    HStack {
+                        SpeedometerView(speed: locationManager.speed)
+                            .padding(.leading, 16)
+                            .padding(.bottom, controlsBottomPadding(safeBottom: safeBottom))
+                            .opacity(sheetPosition == .expanded ? 0 : 1)
+                        Spacer()
+                    }
+                }
             }
         }
         .tint(Brand.tint)
@@ -442,6 +454,30 @@ struct MapHomeView: View {
     private func setSelectedGroup(_ g: UserGroup) {
         selectedGroup = g
         presenceRepo.startListening(groupDocPath: g.docPath)
+    }
+}
+
+// MARK: - Velocímetro
+
+private struct SpeedometerView: View {
+    let speed: CLLocationSpeed
+
+    // Convert speed from m/s to km/h
+    private var speedInKmH: Double {
+        return speed * 3.6
+    }
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(String(format: "%.0f", speedInKmH))
+                .font(.system(size: 32, weight: .bold))
+                .foregroundStyle(.primary)
+            Text("km/h")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
