@@ -3,7 +3,7 @@ import FirebaseFirestore
 
 struct EventItem: Codable, Identifiable {
     @DocumentID var id: String?
-    let name: String
+    var name: String
     let participants: [String]
     let location: GeoPoint
     let createdBy: String

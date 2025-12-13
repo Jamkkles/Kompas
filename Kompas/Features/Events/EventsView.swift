@@ -44,6 +44,7 @@ struct EventsView: View {
                 viewModel.fetchEvents()
             }
         }
+        .environmentObject(viewModel)
     }
 }
 
@@ -52,9 +53,7 @@ struct EventCard: View {
     @State private var placemark: CLPlacemark?
 
     var body: some View {
-        NavigationLink {
-            Text("Detalle del evento: \(event.name)")
-        } label: {
+        NavigationLink(destination: EventDetailView(event: event)) {
             HStack(spacing: 16) {
                 VStack(spacing: 4) {
                     Text(event.createdAt.dateValue(), format: .dateTime.day())
