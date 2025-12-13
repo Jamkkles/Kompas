@@ -3,17 +3,16 @@ import MapKit
 import Combine
 
 struct CreateEventView: View {
+    @StateObject private var viewModel: CreateEventViewModel
     @EnvironmentObject var locationManager: LocationManager
     @Environment(\.dismiss) private var dismiss
 
-    // Datos del evento
-    @State private var eventName: String = ""
-    @State private var eventParticipants: String = ""
-    @State private var eventCoordinate: CLLocationCoordinate2D?
-
     // Estado del mapa
-    @State private var camera: MapCameraPosition = .automatic
     @State private var hasCenteredMap = false
+
+    init(session: SessionStore) {
+        _viewModel = StateObject(wrappedValue: CreateEventViewModel(session: session))
+    }
 
     var body: some View {
         NavigationView {
@@ -24,14 +23,14 @@ struct CreateEventView: View {
                     Spacer()
 
                     VStack(spacing: 12) {
-                        TextField("Nombre del evento", text: $eventName)
+                        TextField("Nombre del evento", text: $viewModel.eventName)
                             .textFieldStyle(.roundedBorder)
 
-                        TextField("Participantes (separados por coma)", text: $eventParticipants)
+                        TextField("Participantes (separados por coma)", text: $viewModel.eventParticipants)
                             .textFieldStyle(.roundedBorder)
 
                         Button {
-                            saveEvent()
+                            viewModel.saveEvent()
                             dismiss()
                         } label: {
                             Label("Guardar evento", systemImage: "checkmark.circle.fill")
@@ -39,7 +38,7 @@ struct CreateEventView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(Brand.tint)
-                        .disabled(eventName.trimmingCharacters(in: .whitespaces).isEmpty || eventCoordinate == nil)
+                        .disabled(viewModel.eventName.trimmingCharacters(in: .whitespaces).isEmpty || viewModel.eventCoordinate == nil)
                     }
                     .padding()
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
@@ -58,8 +57,8 @@ struct CreateEventView: View {
             // Centramos solo una vez al obtener la ubicación
             if !hasCenteredMap {
                 hasCenteredMap = true
-                eventCoordinate = coord
-                camera = .region(
+                viewModel.eventCoordinate = coord
+                viewModel.camera = .region(
                     MKCoordinateRegion(
                         center: coord,
                         span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
@@ -70,30 +69,27 @@ struct CreateEventView: View {
     }
 
     private var mapView: some View {
-        Map(position: $camera) {
-            if let coord = eventCoordinate {
-                Marker("Evento", coordinate: coord)
+        MapReader { reader in
+            Map(position: $viewModel.camera) {
+                if let coord = viewModel.eventCoordinate {
+                    Marker("Evento", coordinate: coord)
+                }
             }
+            .onTapGesture { screenCoord in
+                viewModel.eventCoordinate = reader.convert(screenCoord, from: .local)
+            }
+            .mapControls {
+                MapCompass()
+                MapUserLocationButton()
+                MapPitchToggle()
+            }
+            .ignoresSafeArea(edges: .top)
         }
-        .mapControls {
-            MapCompass()
-            MapUserLocationButton()
-            MapPitchToggle()
-        }
-        .ignoresSafeArea(edges: .top)
-    }
-
-    private func saveEvent() {
-        print("💾 Guardando evento: \(eventName)")
-        if let c = eventCoordinate {
-            print("   • coord: \(c.latitude), \(c.longitude)")
-        }
-        print("   • participantes: \(eventParticipants)")
-        // Aquí después conectas con Firestore si quieres
     }
 }
 
 #Preview {
-    CreateEventView()
+    CreateEventView(session: SessionStore.shared)
         .environmentObject(LocationManager())
+        .environmentObject(SessionStore.shared)
 }

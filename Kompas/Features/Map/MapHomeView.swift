@@ -22,6 +22,7 @@ struct MapHomeView: View {
     @StateObject private var groupRepo = GroupRepository()
     @StateObject private var presenceRepo = PresenceRepository()
     @StateObject private var searchVM = MapSearchVM()
+    @StateObject private var eventsVM = EventsViewModel()
 
 
     @State private var selectedGroup: UserGroup?
@@ -95,6 +96,7 @@ struct MapHomeView: View {
         .tint(Brand.tint)
         .onAppear {
             groupRepo.startListening()
+            eventsVM.fetchEvents()
         }
         .onDisappear {
             presenceRepo.stopListening()
@@ -221,6 +223,13 @@ struct MapHomeView: View {
                 }
             }
             
+            // Eventos
+            ForEach(eventsVM.upcomingEvents) { event in
+                Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
+                    EventPin()
+                }
+            }
+            
             // Lugar buscado
             if let searched = searchedLocation {
                 Annotation("", coordinate: searched) {
@@ -233,7 +242,7 @@ struct MapHomeView: View {
             self.mapHeading = context.camera.heading
         }
     }
-
+        
     // MARK: - Controles flotantes
 
     private var mapControls: some View {

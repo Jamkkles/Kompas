@@ -1,16 +1,12 @@
 import SwiftUI
 
+import SwiftUI
+import CoreLocation
+
 struct EventsView: View {
     @State private var showingCreateEvent = false
-
-    let upcomingEvents = [
-        EventItem(title: "Almuerzo Familiar", date: Date().addingTimeInterval(3600),
-                  location: "Taquería María", participants: 5, color: .blue),
-        EventItem(title: "Reunión Amigos", date: Date().addingTimeInterval(86400),
-                  location: "Plaza de Armas", participants: 8, color: .green),
-        EventItem(title: "Compras", date: Date().addingTimeInterval(172800),
-                  location: "Mall Paseo Curicó", participants: 3, color: .orange)
-    ]
+    @EnvironmentObject var session: SessionStore
+    @StateObject private var viewModel = EventsViewModel()
 
     var body: some View {
         NavigationView {
@@ -20,7 +16,7 @@ struct EventsView: View {
                     LazyVStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Próximos Eventos").font(.title2.bold()).padding(.horizontal)
-                            ForEach(upcomingEvents) { event in
+                            ForEach(viewModel.upcomingEvents) { event in
                                 EventCard(event: event)
                             }
                         }
@@ -42,33 +38,29 @@ struct EventsView: View {
             .navigationTitle("Eventos")
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showingCreateEvent) {
-                CreateEventView()
+                CreateEventView(session: session)
+            }
+            .onAppear {
+                viewModel.fetchEvents()
             }
         }
     }
 }
 
-struct EventItem: Identifiable {
-    let id = UUID()
-    let title: String
-    let date: Date
-    let location: String
-    let participants: Int
-    let color: Color
-}
-
 struct EventCard: View {
     let event: EventItem
+    @State private var placemark: CLPlacemark?
+
     var body: some View {
         NavigationLink {
-            Text("Detalle del evento: \(event.title)")
+            Text("Detalle del evento: \(event.name)")
         } label: {
             HStack(spacing: 16) {
                 VStack(spacing: 4) {
-                    Text(event.date, format: .dateTime.day())
+                    Text(event.createdAt.dateValue(), format: .dateTime.day())
                         .font(.title.bold())
                         .foregroundStyle(event.color)
-                    Text(event.date, format: .dateTime.month(.abbreviated))
+                    Text(event.createdAt.dateValue(), format: .dateTime.month(.abbreviated))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -77,10 +69,14 @@ struct EventCard: View {
                 .background(RoundedRectangle(cornerRadius: 12).fill(event.color.opacity(0.1)))
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(event.title).font(.headline)
+                    Text(event.name).font(.headline)
                     HStack(spacing: 12) {
-                        Label(event.location, systemImage: "mappin.circle.fill")
-                        Label("\(event.participants)", systemImage: "person.2.fill")
+                        if let placemark = placemark {
+                            Label("\(placemark.thoroughfare ?? ""), \(placemark.locality ?? "")", systemImage: "mappin.circle.fill")
+                        } else {
+                            Label("Cargando...", systemImage: "mappin.circle.fill")
+                        }
+                        Label("\(event.participants.count)", systemImage: "person.2.fill")
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -95,5 +91,18 @@ struct EventCard: View {
             .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
         }
         .buttonStyle(.plain)
+        .onAppear(perform: getPlacemark)
+    }
+
+    private func getPlacemark() {
+        let location = CLLocation(latitude: event.location.latitude, longitude: event.location.longitude)
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            if let error = error {
+                print("Error reverse geocoding: \(error.localizedDescription)")
+            } else if let placemarks = placemarks {
+                self.placemark = placemarks.first
+            }
+        }
     }
 }
