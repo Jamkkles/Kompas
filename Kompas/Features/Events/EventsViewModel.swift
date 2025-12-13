@@ -1,9 +1,10 @@
 import SwiftUI
 import FirebaseFirestore
-
+import MapKit
 
 final class EventsViewModel: ObservableObject {
     @Published var upcomingEvents = [EventItem]()
+    @Published var eventRoutes: [String: MKRoute] = [:] // Nuevas rutas por evento ID
     @Published var errorMessage: String?
     @Published var showErrorAlert = false
 
@@ -55,5 +56,33 @@ final class EventsViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    // Nueva función para calcular rutas
+    func calculateRoute(for event: EventItem, from userLocation: CLLocationCoordinate2D) {
+        guard let eventId = event.id else { return }
+        
+        let request = MKDirections.Request()
+        request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation))
+        request.destination = MKMapItem(placemark: MKPlacemark(
+            coordinate: CLLocationCoordinate2D(
+                latitude: event.location.latitude,
+                longitude: event.location.longitude
+            )
+        ))
+        request.transportType = .automobile
+        
+        let directions = MKDirections(request: request)
+        directions.calculate { [weak self] response, error in
+            DispatchQueue.main.async {
+                if let route = response?.routes.first {
+                    self?.eventRoutes[eventId] = route
+                }
+            }
+        }
+    }
+    
+    func clearRoutes() {
+        eventRoutes.removeAll()
     }
 }

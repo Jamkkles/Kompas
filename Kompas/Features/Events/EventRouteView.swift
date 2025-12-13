@@ -4,18 +4,29 @@ import MapKit
 struct EventRouteView: View {
     let event: EventItem
     @State private var route: MKRoute?
-    @State private var region: MKCoordinateRegion = .init(
-        center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    )
+    @State private var camera: MapCameraPosition = .automatic
 
     var body: some View {
         NavigationView {
             ZStack {
-                Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: [event]) { event in
-                    MapMarker(coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude), tint: .blue)
+                Map(position: $camera) {
+                    // Event marker
+                    Marker(event.name, coordinate: CLLocationCoordinate2D(
+                        latitude: event.location.latitude, 
+                        longitude: event.location.longitude
+                    ))
+                    .tint(.blue)
+                    
+                    // Route polyline
+                    if let route = route {
+                        MapPolyline(coordinates: route.polyline.coordinates)
+                            .stroke(Brand.tint, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                    }
                 }
-                .overlay(routeOverlay)
+                .mapControls {
+                    MapUserLocationButton()
+                    MapCompass()
+                }
 
                 if route == nil {
                     ProgressView("Calculando ruta...")
@@ -26,14 +37,6 @@ struct EventRouteView: View {
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 calculateRoute()
-            }
-        }
-    }
-
-    private var routeOverlay: some View {
-        SwiftUI.Group {
-            if let route = route {
-                MapPolyline(route: route)
             }
         }
     }
@@ -53,10 +56,12 @@ struct EventRouteView: View {
 
             if let route = response?.routes.first {
                 self.route = route
-                self.region = MKCoordinateRegion(
+                // Update camera to show the route
+                self.camera = .region(MKCoordinateRegion(
                     center: route.polyline.coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-                )
+                    latitudinalMeters: route.distance * 1.5,
+                    longitudinalMeters: route.distance * 1.5
+                ))
             }
         }
     }

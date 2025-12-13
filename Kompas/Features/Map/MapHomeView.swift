@@ -41,6 +41,8 @@ struct MapHomeView: View {
     @State private var selectedEventImage: String?
     @State private var showingEventImageSheet = false
 
+    @State private var showEventRoutes = false // Nuevo toggle para mostrar rutas
+
     var body: some View {
         GeometryReader { proxy in
             let totalHeight = proxy.size.height
@@ -52,15 +54,38 @@ struct MapHomeView: View {
                 theMap
                     .ignoresSafeArea()
 
-                // TOP BAR
+                // TOP BAR (actualizado con botón de rutas)
                 VStack {
-                    topBar
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                        .opacity(sheetPosition == .expanded ? 0 : 1)
+                    HStack {
+                        topBar
+                        
+                        Spacer()
+                        
+                        // Botón para toggle de rutas
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                showEventRoutes.toggle()
+                                if showEventRoutes {
+                                    calculateEventRoutes()
+                                } else {
+                                    eventsVM.clearRoutes()
+                                }
+                            }
+                        } label: {
+                            Image(systemName: showEventRoutes ? "location.north.line.fill" : "location.north.line")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(showEventRoutes ? Brand.tint : .secondary)
+                                .frame(width: 44, height: 44)
+                                .background(Circle().fill(.ultraThinMaterial))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .opacity(sheetPosition == .expanded ? 0 : 1)
+                    
                     Spacer()
                 }
-
+                
                 // CONTROLES FLOTANTES
                 VStack {
                     Spacer()
@@ -209,7 +234,7 @@ struct MapHomeView: View {
         }
     }
 
-    // MARK: - Mapa
+    // MARK: - Mapa (actualizado)
 
     private var theMap: some View {
         Map(position: $camera) {
@@ -254,13 +279,30 @@ struct MapHomeView: View {
                     SearchedLocationPin()
                 }
             }
+            
+            // Rutas de eventos
+            ForEach(Array(eventsVM.eventRoutes.keys), id: \.self) { eventId in
+                if let route = eventsVM.eventRoutes[eventId] {
+                    MapPolyline(coordinates: route.polyline.coordinates)
+                        .stroke(Brand.tint, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                }
+            }
         }
         .mapStyle(mapMode == .standard ? .standard : .imagery)
         .onMapCameraChange { context in
             self.mapHeading = context.camera.heading
         }
     }
+    
+    // Nueva función para calcular rutas de eventos
+    private func calculateEventRoutes() {
+        guard let userLocation = locationManager.userLocation else { return }
         
+        for event in eventsVM.upcomingEvents {
+            eventsVM.calculateRoute(for: event, from: userLocation)
+        }
+    }
+
     // MARK: - Controles flotantes
 
     private var mapControls: some View {
@@ -374,6 +416,21 @@ struct MapHomeView: View {
                     .foregroundStyle(.primary)
 
                 Spacer()
+                
+                // Indicador de rutas
+                if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.north.line.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Brand.tint)
+                        Text("\(eventsVM.eventRoutes.count) ruta\(eventsVM.eventRoutes.count == 1 ? "" : "s")")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Brand.tint)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Brand.tint.opacity(0.1), in: Capsule())
+                }
 
                 if let name = selectedGroup?.name {
                     Text(name)
