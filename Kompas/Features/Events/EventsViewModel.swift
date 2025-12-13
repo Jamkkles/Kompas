@@ -60,7 +60,14 @@ final class EventsViewModel: ObservableObject {
 
     // Nueva función para calcular rutas
     func calculateRoute(for event: EventItem, from userLocation: CLLocationCoordinate2D) {
-        guard let eventId = event.id else { return }
+        guard let eventId = event.id else { 
+            print("❌ Evento sin ID")
+            return 
+        }
+        
+        print("🗺️ Calculando ruta para evento: \(event.name)")
+        print("   • Desde: \(userLocation)")
+        print("   • Hacia: \(event.location)")
         
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation))
@@ -75,8 +82,18 @@ final class EventsViewModel: ObservableObject {
         let directions = MKDirections(request: request)
         directions.calculate { [weak self] response, error in
             DispatchQueue.main.async {
+                if let error = error {
+                    print("❌ Error calculando ruta: \(error.localizedDescription)")
+                    return
+                }
+                
                 if let route = response?.routes.first {
+                    print("✅ Ruta calculada exitosamente")
+                    print("   • Distancia: \(route.distance/1000) km")
+                    print("   • Tiempo: \(route.expectedTravelTime/60) min")
                     self?.eventRoutes[eventId] = route
+                } else {
+                    print("❌ No se pudo calcular la ruta")
                 }
             }
         }

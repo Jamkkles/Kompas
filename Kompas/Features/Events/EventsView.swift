@@ -1,12 +1,13 @@
 import SwiftUI
-
-import SwiftUI
 import CoreLocation
 
 struct EventsView: View {
     @State private var showingCreateEvent = false
     @EnvironmentObject var session: SessionStore
     @StateObject private var viewModel = EventsViewModel()
+    
+    // Agregar binding para el tab seleccionado
+    @Binding var selectedTab: Int
 
     var body: some View {
         NavigationView {
@@ -17,7 +18,7 @@ struct EventsView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Próximos Eventos").font(.title2.bold()).padding(.horizontal)
                             ForEach(viewModel.upcomingEvents) { event in
-                                EventCard(event: event)
+                                EventCard(event: event, selectedTab: $selectedTab)
                             }
                         }
                         .padding(.top)
@@ -51,9 +52,10 @@ struct EventsView: View {
 struct EventCard: View {
     let event: EventItem
     @State private var placemark: CLPlacemark?
+    @Binding var selectedTab: Int
 
     var body: some View {
-        NavigationLink(destination: EventDetailView(event: event)) {
+        NavigationLink(destination: EventDetailView(event: event, selectedTab: $selectedTab)) {
             HStack(spacing: 16) {
                 VStack(spacing: 4) {
                     Text(event.createdAt.dateValue(), format: .dateTime.day())

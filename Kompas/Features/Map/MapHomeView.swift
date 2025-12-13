@@ -125,10 +125,28 @@ struct MapHomeView: View {
         .onAppear {
             groupRepo.startListening()
             eventsVM.fetchEvents()
+            
+            // Escuchar notificaciones para mostrar rutas de eventos específicos
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("ShowEventRoute"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                if let eventId = notification.object as? String {
+                    showSpecificEventRoute(eventId: eventId)
+                }
+            }
         }
         .onDisappear {
             presenceRepo.stopListening()
             groupRepo.stopListening()
+            
+            // Remover el observer
+            NotificationCenter.default.removeObserver(
+                self,
+                name: NSNotification.Name("ShowEventRoute"),
+                object: nil
+            )
         }
         .onReceive(groupRepo.$groups) { groups in
             if selectedGroup == nil, let first = groups.first {
@@ -300,6 +318,56 @@ struct MapHomeView: View {
         
         for event in eventsVM.upcomingEvents {
             eventsVM.calculateRoute(for: event, from: userLocation)
+        }
+    }
+    
+    // MARK: - Nueva función para mostrar ruta de evento específico
+    private func showSpecificEventRoute(eventId: String) {
+        print("🎯 Mostrando ruta para evento ID: \(eventId)")
+        
+        // Activar el toggle de rutas
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            showEventRoutes = true
+        }
+        
+        // Enfocar en el evento específico si existe una ruta calculada
+        if let route = eventsVM.eventRoutes[eventId] {
+            print("✅ Ruta encontrada, enfocando en el mapa")
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                camera = .region(
+                    MKCoordinateRegion(
+                        center: route.polyline.coordinate,
+                        latitudinalMeters: route.distance * 1.2,
+                        longitudinalMeters: route.distance * 1.2
+                    )
+                )
+            }
+        } else {
+            print("⏳ Buscando evento para calcular ruta...")
+            // Si no hay ruta calculada, buscar el evento y calcularlo
+            if let event = eventsVM.upcomingEvents.first(where: { $0.id == eventId }),
+               let userLocation = locationManager.userLocation {
+                
+                print("🗺️ Calculando nueva ruta...")
+                eventsVM.calculateRoute(for: event, from: userLocation)
+                
+                // Enfocar en la ubicación del evento mientras se calcula la ruta
+                let eventCoord = CLLocationCoordinate2D(
+                    latitude: event.location.latitude,
+                    longitude: event.location.longitude
+                )
+                
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    camera = .region(
+                        MKCoordinateRegion(
+                            center: eventCoord,
+                            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                        )
+                    )
+                }
+            } else {
+                print("❌ No se encontró el evento o la ubicación del usuario")
+            }
         }
     }
 

@@ -3,9 +3,13 @@ import SwiftUI
 struct EventDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var viewModel: EventsViewModel
+    @EnvironmentObject var locationManager: LocationManager // Usar el environment object
     @State var event: EventItem
     @State private var showRoute = false
-
+    
+    // Agregar esta variable para comunicarse con el tab principal
+    @Binding var selectedTab: Int
+    
     var body: some View {
         Form {
             Section(header: Text("Detalles del Evento")) {
@@ -26,7 +30,30 @@ struct EventDetailView: View {
 
             Section {
                 Button("Ir a evento") {
-                    showRoute = true
+                    // Usar el LocationManager del environment object
+                    if let userLocation = locationManager.userLocation {
+                        print("🗺️ Calculando ruta desde: \(userLocation)")
+                        print("🎯 Hacia evento: \(event.name) en \(event.location)")
+                        
+                        // Calcular la ruta para este evento específico
+                        viewModel.calculateRoute(for: event, from: userLocation)
+                        
+                        // Activar el modo de rutas en el mapa principal
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ShowEventRoute"),
+                            object: event.id
+                        )
+                        
+                        print("📡 Notificación enviada para evento: \(event.id ?? "sin ID")")
+                        
+                        // Cambiar al tab del mapa
+                        selectedTab = 0
+                        
+                        // Cerrar la vista actual
+                        dismiss()
+                    } else {
+                        print("❌ No hay ubicación disponible")
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.blue)

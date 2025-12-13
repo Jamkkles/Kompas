@@ -21,7 +21,7 @@ struct MainAppView: View {
                 }
                 .tag(1)
 
-            EventsView()
+            EventsView(selectedTab: $selectedTab)
                 .tabItem {
                     Label("Eventos", systemImage: "calendar")
                 }
@@ -33,7 +33,8 @@ struct MainAppView: View {
                 }
                 .tag(3)
         }
-        .tint(.blue) // o usa .tint(Brand.tint) si definiste tu color personalizado
+        .tint(.blue)
+        .environmentObject(locationManager) // Asegurarse de pasar el locationManager
     }
 }
 
