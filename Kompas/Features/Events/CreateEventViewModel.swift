@@ -46,7 +46,12 @@ class CreateEventViewModel: ObservableObject {
         ]
         
         if let photoBase64 = photoBase64 {
+            print("📷 Photo Base64 string length: \(photoBase64.count) characters")
+            // A rough estimate of byte size: Base64 string is about 1.33 times larger than original data
+            print("📷 Estimated Photo Data Size: \((Double(photoBase64.count) * 0.75) / 1024 / 1024) MB")
             eventData["photoBase64"] = photoBase64
+        } else {
+            print("📷 No photoBase64 provided or conversion failed.")
         }
 
         do {

@@ -12,6 +12,8 @@ struct CreateEventView: View {
     @State private var selectedIcon: EventIcon = .calendar
     @State private var inputImage: UIImage?
     @State private var showingImagePicker = false
+    @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
+    @State private var showingSourceTypeActionSheet = false
 
     // Estado del mapa
     @State private var hasCenteredMap = false
@@ -47,7 +49,7 @@ struct CreateEventView: View {
                         
                         // Image Picker Button
                         Button {
-                            showingImagePicker = true
+                            showingSourceTypeActionSheet = true
                         } label: {
                             Label("Seleccionar Foto", systemImage: "photo.fill")
                                 .frame(maxWidth: .infinity)
@@ -77,8 +79,11 @@ struct CreateEventView: View {
                                 combinedComponents.minute = timeComponents.minute
                                 
                                 var photoBase64: String? = nil
-                                if let inputImage = inputImage, let imageData = inputImage.jpegData(compressionQuality: 0.8) {
-                                    photoBase64 = imageData.base64EncodedString()
+                                if let inputImage = inputImage {
+                                    let resizedImage = resizeImage(image: inputImage, targetSize: CGSize(width: 1024, height: 1024))
+                                    if let imageData = resizedImage.jpegData(compressionQuality: 0.5) {
+                                        photoBase64 = imageData.base64EncodedString()
+                                    }
                                 }
 
                                 if let combinedDate = calendar.date(from: combinedComponents) {
@@ -103,7 +108,20 @@ struct CreateEventView: View {
             .navigationTitle("Nuevo evento")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(image: $inputImage)
+                ImagePicker(image: $inputImage, sourceType: imagePickerSourceType)
+            }
+            .actionSheet(isPresented: $showingSourceTypeActionSheet) {
+                ActionSheet(title: Text("Seleccionar origen de la foto"), buttons: [
+                    .default(Text("Cámara")) {
+                        imagePickerSourceType = .camera
+                        showingImagePicker = true
+                    },
+                    .default(Text("Librería de Fotos")) {
+                        imagePickerSourceType = .photoLibrary
+                        showingImagePicker = true
+                    },
+                    .cancel()
+                ])
             }
         }
         .onReceive(
@@ -124,6 +142,32 @@ struct CreateEventView: View {
                 )
             }
         }
+    }
+
+    private func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
+        let size = image.size
+
+        let widthRatio  = targetSize.width  / size.width
+        let heightRatio = targetSize.height / size.height
+
+        // Determine what our actual size should be
+        var newSize: CGSize
+        if(widthRatio > heightRatio) {
+            newSize = CGSize(width: size.width * heightRatio, height: size.height * heightRatio)
+        } else {
+            newSize = CGSize(width: size.width * widthRatio, height: size.height * widthRatio)
+        }
+
+        // This is the rect that we've calculated out and this is what is actually used below
+        let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
+
+        // Actually do the resizing to the rect
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: rect)
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage ?? image
     }
 
     private var mapView: some View {
