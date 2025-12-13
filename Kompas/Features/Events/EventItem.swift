@@ -8,6 +8,8 @@ struct EventItem: Codable, Identifiable {
     let location: GeoPoint
     let createdBy: String
     let createdAt: Timestamp
+    let date: Timestamp?
+    let icon: EventIcon?
 
     var color: Color {
         // You can determine the color based on some logic,

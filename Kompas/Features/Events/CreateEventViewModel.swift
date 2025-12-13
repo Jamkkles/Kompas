@@ -16,7 +16,7 @@ class CreateEventViewModel: ObservableObject {
     }
 
     @MainActor
-    func saveEvent() {
+    func saveEvent(date: Date, icon: EventIcon) async {
         print("💾 Guardando evento: \(eventName)")
         if let c = eventCoordinate {
             print("   • coord: \(c.latitude), \(c.longitude)")
@@ -40,15 +40,16 @@ class CreateEventViewModel: ObservableObject {
             "participants": eventParticipants.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) },
             "location": GeoPoint(latitude: eventCoordinate.latitude, longitude: eventCoordinate.longitude),
             "createdBy": currentUserID,
-            "createdAt": Timestamp(date: Date())
+            "createdAt": Timestamp(date: Date()),
+            "date": Timestamp(date: date),
+            "icon": icon.rawValue
         ]
 
-        db.collection("events").addDocument(data: eventData) { error in
-            if let error = error {
-                print("Error al guardar el evento en Firestore: \(error.localizedDescription)")
-            } else {
-                print("¡Evento guardado exitosamente en Firestore!")
-            }
+        do {
+            try await db.collection("events").addDocument(data: eventData)
+            print("¡Evento guardado exitosamente en Firestore!")
+        } catch {
+            print("Error al guardar el evento en Firestore: \(error.localizedDescription)")
         }
     }
 }

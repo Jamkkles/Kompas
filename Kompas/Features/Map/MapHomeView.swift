@@ -225,8 +225,14 @@ struct MapHomeView: View {
             
             // Eventos
             ForEach(eventsVM.upcomingEvents) { event in
-                Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
-                    EventPin()
+                if let date = event.date {
+                    Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
+                        EventPin(name: event.name, icon: event.icon, date: date.dateValue())
+                    }
+                } else {
+                    Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
+                        EventPin(name: event.name, icon: event.icon, date: event.createdAt.dateValue())
+                    }
                 }
             }
             

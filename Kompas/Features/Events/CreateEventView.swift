@@ -6,6 +6,10 @@ struct CreateEventView: View {
     @StateObject private var viewModel: CreateEventViewModel
     @EnvironmentObject var locationManager: LocationManager
     @Environment(\.dismiss) private var dismiss
+    
+    @State private var eventDate = Date()
+    @State private var eventTime = Date()
+    @State private var selectedIcon: EventIcon = .calendar
 
     // Estado del mapa
     @State private var hasCenteredMap = false
@@ -28,10 +32,36 @@ struct CreateEventView: View {
 
                         TextField("Participantes (separados por coma)", text: $viewModel.eventParticipants)
                             .textFieldStyle(.roundedBorder)
+                        
+                        DatePicker("Fecha", selection: $eventDate, displayedComponents: .date)
+                        DatePicker("Hora", selection: $eventTime, displayedComponents: .hourAndMinute)
+                        
+                        Picker("Icono", selection: $selectedIcon) {
+                            ForEach(EventIcon.allCases, id: \.self) { icon in
+                                Image(systemName: icon.symbolName).tag(icon)
+                            }
+                        }
+                        .pickerStyle(.segmented)
 
                         Button {
-                            viewModel.saveEvent()
-                            dismiss()
+                            Task {
+                                let calendar = Calendar.current
+                                let dateComponents = calendar.dateComponents([.year, .month, .day], from: eventDate)
+                                let timeComponents = calendar.dateComponents([.hour, .minute], from: eventTime)
+                                
+                                var combinedComponents = DateComponents()
+                                combinedComponents.year = dateComponents.year
+                                combinedComponents.month = dateComponents.month
+                                combinedComponents.day = dateComponents.day
+                                combinedComponents.hour = timeComponents.hour
+                                combinedComponents.minute = timeComponents.minute
+                                
+                                if let combinedDate = calendar.date(from: combinedComponents) {
+                                    await viewModel.saveEvent(date: combinedDate, icon: selectedIcon)
+                                }
+                                
+                                dismiss()
+                            }
                         } label: {
                             Label("Guardar evento", systemImage: "checkmark.circle.fill")
                                 .frame(maxWidth: .infinity)
