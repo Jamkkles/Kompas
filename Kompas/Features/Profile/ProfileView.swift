@@ -194,6 +194,12 @@ struct ProfileView: View {
             ) {
                 showEditProfile = true
             }
+            .sheet(isPresented: $showEditProfile) {
+                if let user = session.user {
+                    EditProfileView(user: user)
+                        .environmentObject(session)
+                }
+            }
             
             Divider()
                 .padding(.leading, 56)

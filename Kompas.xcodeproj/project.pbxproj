@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6FCD1ED92EEDC1C5000D0968 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 6FCD1ED82EEDC1C5000D0968 /* FirebaseStorage */; };
 		BC371E0A2EAFC664006A976E /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = BC371E092EAFC664006A976E /* FirebaseAuth */; };
 		BC371E0C2EAFC664006A976E /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = BC371E0B2EAFC664006A976E /* FirebaseCore */; };
 		BCDFE7B52EBD37760047C295 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = BCDFE7B42EBD37760047C295 /* GoogleSignIn */; };
@@ -65,6 +66,7 @@
 				BCDFE7B52EBD37760047C295 /* GoogleSignIn in Frameworks */,
 				BCE64CC02EC24786001AC4DD /* FirebaseFirestore in Frameworks */,
 				BCDFE7B72EBD37760047C295 /* GoogleSignInSwift in Frameworks */,
+				6FCD1ED92EEDC1C5000D0968 /* FirebaseStorage in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -91,6 +93,7 @@
 				625AF4402E9C550F00747120 /* Kompas */,
 				625AF4532E9C551100747120 /* KompasTests */,
 				625AF45D2E9C551100747120 /* KompasUITests */,
+				6FCD1ED72EEDC1C5000D0968 /* Frameworks */,
 				625AF43F2E9C550F00747120 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -103,6 +106,13 @@
 				625AF45A2E9C551100747120 /* KompasUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6FCD1ED72EEDC1C5000D0968 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -130,6 +140,7 @@
 				BCDFE7B42EBD37760047C295 /* GoogleSignIn */,
 				BCDFE7B62EBD37760047C295 /* GoogleSignInSwift */,
 				BCE64CBF2EC24786001AC4DD /* FirebaseFirestore */,
+				6FCD1ED82EEDC1C5000D0968 /* FirebaseStorage */,
 			);
 			productName = Kompas;
 			productReference = 625AF43E2E9C550F00747120 /* Kompas.app */;
@@ -419,7 +430,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 54NJD49W96;
+				DEVELOPMENT_TEAM = 7R4932AHB7;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Tu ubicación se usará para centrar el mapa.";
@@ -428,6 +439,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -457,6 +469,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -603,6 +616,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		6FCD1ED82EEDC1C5000D0968 /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BC371E062EAFC3D5006A976E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
 		BC371E092EAFC664006A976E /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = BC371E062EAFC3D5006A976E /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

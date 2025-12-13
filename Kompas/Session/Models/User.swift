@@ -3,8 +3,8 @@ import Foundation
 struct User: Codable, Identifiable, Equatable {
     let id: String
     let email: String
-    let name: String
-    let photoURL: URL?
+    var name: String
+    var photoURL: URL?
 
     init(id: String, email: String, name: String, photoURL: URL? = nil) {
         self.id = id

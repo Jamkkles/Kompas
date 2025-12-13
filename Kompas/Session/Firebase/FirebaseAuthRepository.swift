@@ -4,6 +4,7 @@ import FirebaseCore
 import FirebaseAuth
 import AuthenticationServices
 import GoogleSignIn
+import FirebaseStorage
 
 @MainActor
 final class FirebaseAuthRepository {
@@ -76,6 +77,31 @@ final class FirebaseAuthRepository {
         _ = try await Auth.auth().signIn(with: credential)
         return try await mapCurrentUser()
     }
+
+    func updateProfile(name: String, photoBase64: String?) async throws {
+    guard let user = Auth.auth().currentUser else {
+        throw NSError(domain: "FirebaseAuth", code: -10, userInfo: [NSLocalizedDescriptionKey: "No hay usuario autenticado"])
+    }
+
+    let changeRequest = user.createProfileChangeRequest()
+    changeRequest.displayName = name
+
+    if let photoBase64 = photoBase64 {
+        let storageRef = Storage.storage().reference().child("profile_pictures/\(user.uid).jpg")
+        if let imageData = Data(base64Encoded: photoBase64) {
+            do {
+                _ = try await storageRef.putDataAsync(imageData)
+                let downloadURL = try await storageRef.downloadURL()
+                changeRequest.photoURL = downloadURL
+            } catch {
+                print("Error al subir la imagen a Firebase Storage: \(error.localizedDescription)")
+                throw error
+            }
+        }
+    }
+
+    try await changeRequest.commitChanges()
+}
 
     // MARK: - Helpers Apple
     private final class AppleAuthDelegate: NSObject, ASAuthorizationControllerDelegate {
