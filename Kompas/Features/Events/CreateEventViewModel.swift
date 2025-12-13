@@ -16,7 +16,7 @@ class CreateEventViewModel: ObservableObject {
     }
 
     @MainActor
-    func saveEvent(date: Date, icon: EventIcon) async {
+    func saveEvent(date: Date, icon: EventIcon, photoBase64: String?) async {
         print("💾 Guardando evento: \(eventName)")
         if let c = eventCoordinate {
             print("   • coord: \(c.latitude), \(c.longitude)")
@@ -35,7 +35,7 @@ class CreateEventViewModel: ObservableObject {
 
         let db = Firestore.firestore()
         
-        let eventData: [String: Any] = [
+        var eventData: [String: Any] = [
             "name": eventName,
             "participants": eventParticipants.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) },
             "location": GeoPoint(latitude: eventCoordinate.latitude, longitude: eventCoordinate.longitude),
@@ -44,6 +44,10 @@ class CreateEventViewModel: ObservableObject {
             "date": Timestamp(date: date),
             "icon": icon.rawValue
         ]
+        
+        if let photoBase64 = photoBase64 {
+            eventData["photoBase64"] = photoBase64
+        }
 
         do {
             try await db.collection("events").addDocument(data: eventData)

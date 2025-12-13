@@ -11,6 +11,18 @@ struct EventDetailView: View {
                 TextField("Nombre del evento", text: $event.name)
             }
 
+            if let photoBase64 = event.photoBase64,
+               let imageData = Data(base64Encoded: photoBase64),
+               let uiImage = UIImage(data: imageData) {
+                Section(header: Text("Foto del Evento")) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity)
+                        .cornerRadius(8)
+                }
+            }
+
             Section {
                 Button("Guardar Cambios") {
                     viewModel.updateEvent(event, newName: event.name)

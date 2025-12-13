@@ -10,6 +10,7 @@ struct EventItem: Codable, Identifiable {
     let createdAt: Timestamp
     let date: Timestamp?
     let icon: EventIcon?
+    let photoBase64: String?
 
     var color: Color {
         // You can determine the color based on some logic,

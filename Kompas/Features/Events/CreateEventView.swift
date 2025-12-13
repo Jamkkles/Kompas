@@ -10,6 +10,8 @@ struct CreateEventView: View {
     @State private var eventDate = Date()
     @State private var eventTime = Date()
     @State private var selectedIcon: EventIcon = .calendar
+    @State private var inputImage: UIImage?
+    @State private var showingImagePicker = false
 
     // Estado del mapa
     @State private var hasCenteredMap = false
@@ -42,6 +44,24 @@ struct CreateEventView: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        
+                        // Image Picker Button
+                        Button {
+                            showingImagePicker = true
+                        } label: {
+                            Label("Seleccionar Foto", systemImage: "photo.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        
+                        // Selected Image Thumbnail
+                        if let inputImage = inputImage {
+                            Image(uiImage: inputImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 100)
+                                .cornerRadius(8)
+                        }
 
                         Button {
                             Task {
@@ -56,8 +76,13 @@ struct CreateEventView: View {
                                 combinedComponents.hour = timeComponents.hour
                                 combinedComponents.minute = timeComponents.minute
                                 
+                                var photoBase64: String? = nil
+                                if let inputImage = inputImage, let imageData = inputImage.jpegData(compressionQuality: 0.8) {
+                                    photoBase64 = imageData.base64EncodedString()
+                                }
+
                                 if let combinedDate = calendar.date(from: combinedComponents) {
-                                    await viewModel.saveEvent(date: combinedDate, icon: selectedIcon)
+                                    await viewModel.saveEvent(date: combinedDate, icon: selectedIcon, photoBase64: photoBase64)
                                 }
                                 
                                 dismiss()
@@ -77,6 +102,9 @@ struct CreateEventView: View {
             }
             .navigationTitle("Nuevo evento")
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showingImagePicker) {
+                ImagePicker(image: $inputImage)
+            }
         }
         .onReceive(
             locationManager.$userLocation

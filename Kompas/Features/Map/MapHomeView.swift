@@ -38,6 +38,9 @@ struct MapHomeView: View {
     @State private var showMapModes = false
     @State private var mapHeading: CLLocationDirection = 0
 
+    @State private var selectedEventImage: String?
+    @State private var showingEventImageSheet = false
+
     var body: some View {
         GeometryReader { proxy in
             let totalHeight = proxy.size.height
@@ -160,6 +163,9 @@ struct MapHomeView: View {
                 .presentationDetents([.height(250)])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showingEventImageSheet) {
+            EventImageSheet(photoBase64: selectedEventImage)
+        }
     }
 
     // MARK: - Funciones auxiliares
@@ -227,11 +233,17 @@ struct MapHomeView: View {
             ForEach(eventsVM.upcomingEvents) { event in
                 if let date = event.date {
                     Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
-                        EventPin(name: event.name, icon: event.icon, date: date.dateValue())
+                        EventPin(name: event.name, icon: event.icon, date: date.dateValue(), photoBase64: event.photoBase64) { base64Image in
+                            selectedEventImage = base64Image
+                            showingEventImageSheet = true
+                        }
                     }
                 } else {
                     Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
-                        EventPin(name: event.name, icon: event.icon, date: event.createdAt.dateValue())
+                        EventPin(name: event.name, icon: event.icon, date: event.createdAt.dateValue(), photoBase64: event.photoBase64) { base64Image in
+                            selectedEventImage = base64Image
+                            showingEventImageSheet = true
+                        }
                     }
                 }
             }
