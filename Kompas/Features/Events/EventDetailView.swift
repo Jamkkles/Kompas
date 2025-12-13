@@ -4,6 +4,7 @@ struct EventDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var viewModel: EventsViewModel
     @State var event: EventItem
+    @State private var showRoute = false
 
     var body: some View {
         Form {
@@ -24,6 +25,14 @@ struct EventDetailView: View {
             }
 
             Section {
+                Button("Ir a evento") {
+                    showRoute = true
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.blue)
+            }
+
+            Section {
                 Button("Guardar Cambios") {
                     viewModel.updateEvent(event, newName: event.name)
                     dismiss()
@@ -38,11 +47,8 @@ struct EventDetailView: View {
             }
         }
         .navigationTitle("Editar Evento")
-        .navigationBarTitleDisplayMode(.inline)
-        .alert("Error", isPresented: $viewModel.showErrorAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(viewModel.errorMessage ?? "Ocurrió un error desconocido.")
+        .sheet(isPresented: $showRoute) {
+            EventRouteView(event: event)
         }
     }
 }
