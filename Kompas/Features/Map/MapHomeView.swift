@@ -46,6 +46,9 @@ struct MapHomeView: View {
 
     @State private var showRouteManagementSheet = false
 
+    @State private var showEventDetail = false
+    @State private var eventToShow: EventItem?
+
     var body: some View {
         GeometryReader { proxy in
             let totalHeight = proxy.size.height
@@ -139,6 +142,19 @@ struct MapHomeView: View {
                 }
             }
             
+            // Nueva notificación para mostrar detalles del evento
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("ShowEventDetail"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                if let eventId = notification.object as? String,
+                   let event = eventsVM.upcomingEvents.first(where: { $0.id == eventId }) {
+                    eventToShow = event
+                    showEventDetail = true
+                }
+            }
+            
             // Escuchar notificaciones para cancelar rutas específicas
             NotificationCenter.default.addObserver(
                 forName: NSNotification.Name("CancelEventRoute"),
@@ -166,6 +182,11 @@ struct MapHomeView: View {
             NotificationCenter.default.removeObserver(
                 self,
                 name: NSNotification.Name("ShowEventRoute"),
+                object: nil
+            )
+            NotificationCenter.default.removeObserver(
+                self,
+                name: NSNotification.Name("ShowEventDetail"),
                 object: nil
             )
             NotificationCenter.default.removeObserver(
@@ -234,6 +255,13 @@ struct MapHomeView: View {
         }
         .sheet(isPresented: $showingEventImageSheet) {
             EventImageSheet(photoBase64: selectedEventImage, event: selectedEventForSheet)
+        }
+        .sheet(isPresented: $showEventDetail) {
+            if let event = eventToShow {
+                NavigationView {
+                    EventDetailView(event: event, selectedTab: .constant(0))
+                }
+            }
         }
         .sheet(isPresented: $showRouteManagementSheet) {
             RouteManagementSheet(
@@ -308,7 +336,7 @@ struct MapHomeView: View {
         }
     }
 
-    // MARK: - Mapa (actualizado)
+    // MARK: - Mapa (actualizado con filtro de eventos ocultos)
 
     private var theMap: some View {
         Map(position: $camera) {
@@ -328,8 +356,8 @@ struct MapHomeView: View {
                 }
             }
             
-            // Eventos
-            ForEach(eventsVM.upcomingEvents) { event in
+            // Eventos (filtrados: solo los visibles)
+            ForEach(eventsVM.upcomingEvents.filter { !($0.isHidden ?? false) }) { event in
                 if let date = event.date {
                     Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
                         EventPin(name: event.name, icon: event.icon, date: date.dateValue(), photoBase64: event.photoBase64) { base64Image in
@@ -357,10 +385,12 @@ struct MapHomeView: View {
             }
             
             // Rutas de eventos
-            ForEach(Array(eventsVM.eventRoutes.keys), id: \.self) { eventId in
-                if let route = eventsVM.eventRoutes[eventId] {
-                    MapPolyline(coordinates: route.polyline.coordinates)
-                        .stroke(Brand.tint, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+            if showEventRoutes {
+                ForEach(Array(eventsVM.eventRoutes.keys), id: \.self) { eventId in
+                    if let route = eventsVM.eventRoutes[eventId] {
+                        MapPolyline(coordinates: route.polyline.coordinates)
+                            .stroke(Brand.tint, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                    }
                 }
             }
         }

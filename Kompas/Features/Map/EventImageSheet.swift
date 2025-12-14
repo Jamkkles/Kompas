@@ -26,22 +26,46 @@ struct EventImageSheet: View {
 
                 // Botón Ir al evento
                 if let event = event {
-                    Button {
-                        if let userLoc = locationManager.userLocation {
-                            eventsVM.calculateRoute(for: event, from: userLoc)
-                            NotificationCenter.default.post(
-                                name: NSNotification.Name("ShowEventRoute"),
-                                object: event.id
-                            )
+                    VStack(spacing: 12) {
+                        // Botón Ver detalles
+                        Button {
+                            // Cerrar este sheet primero
                             dismiss()
+                            
+                            // Después de un pequeño delay, navegar al detalle
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                NotificationCenter.default.post(
+                                    name: NSNotification.Name("ShowEventDetail"),
+                                    object: event.id
+                                )
+                            }
+                        } label: {
+                            Label("Ver detalles", systemImage: "info.circle.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(maxWidth: .infinity)
                         }
-                    } label: {
-                        Label("Ir al evento", systemImage: "arrow.triangle.turn.up.right.circle.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .frame(maxWidth: .infinity)
+                        .buttonStyle(.bordered)
+                        .tint(Brand.tint)
+                        
+                        // Botón Ir al evento
+                        Button {
+                            if let userLoc = locationManager.userLocation {
+                                eventsVM.calculateRoute(for: event, from: userLoc)
+                                NotificationCenter.default.post(
+                                    name: NSNotification.Name("ShowEventRoute"),
+                                    object: event.id
+                                )
+                                dismiss()
+                            }
+                        } label: {
+                            Label("Ir al evento", systemImage: "arrow.triangle.turn.up.right.circle.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Brand.tint)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Brand.tint)
+                    .padding(.horizontal, 16)
                     .padding(.top, 16)
                 }
             }

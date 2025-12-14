@@ -42,7 +42,8 @@ class CreateEventViewModel: ObservableObject {
             "createdBy": currentUserID,
             "createdAt": Timestamp(date: Date()),
             "date": Timestamp(date: date),
-            "icon": icon.rawValue
+            "icon": icon.rawValue,
+            "isHidden": false // Inicializar como visible por defecto
         ]
         
         if let photoBase64 = photoBase64 {

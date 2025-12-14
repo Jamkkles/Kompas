@@ -6,6 +6,7 @@ struct EventDetailView: View {
     @EnvironmentObject var locationManager: LocationManager // Usar el environment object
     @State var event: EventItem
     @State private var showRoute = false
+    @State private var hasRoute = false // Nueva variable de estado
     
     // Agregar esta variable para comunicarse con el tab principal
     @Binding var selectedTab: Int
@@ -60,22 +61,51 @@ struct EventDetailView: View {
                     .tint(.blue)
                     
                     // Botón para cancelar ruta si existe
-                    if let eventId = event.id, viewModel.eventRoutes[eventId] != nil {
+                    if hasRoute {
                         Button("Cancelar ruta") {
-                            withAnimation {
-                                viewModel.clearRoute(for: eventId)
-                            }
-                            
-                            // Notificar al mapa que se canceló la ruta
+                            guard let eventId = event.id else { return }
+                            withAnimation { viewModel.clearRoute(for: eventId) }
                             NotificationCenter.default.post(
                                 name: NSNotification.Name("CancelEventRoute"),
                                 object: eventId
                             )
+                            syncRouteState()
                         }
                         .buttonStyle(.bordered)
                         .tint(.red)
                     }
                 }
+            }
+            
+            // Nueva sección para ocultar/mostrar en el mapa
+            Section {
+                Toggle(isOn: Binding(
+                    get: { !(event.isHidden ?? false) },
+                    set: { newValue in
+                        viewModel.toggleEventVisibility(event)
+                        event.isHidden = !newValue
+                    }
+                )) {
+                    HStack(spacing: 12) {
+                        Image(systemName: event.isHidden ?? false ? "eye.slash.fill" : "eye.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(event.isHidden ?? false ? .secondary : Brand.tint)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Mostrar en el mapa")
+                                .font(.system(size: 16, weight: .medium))
+                            
+                            Text(event.isHidden ?? false ? "El evento está oculto" : "El evento es visible")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .tint(Brand.tint)
+            } header: {
+                Text("Visibilidad")
+            } footer: {
+                Text("Los eventos ocultos no se mostrarán en el mapa pero seguirán apareciendo en tu lista de eventos")
             }
 
             Section {
@@ -93,8 +123,20 @@ struct EventDetailView: View {
             }
         }
         .navigationTitle("Editar Evento")
+        .onAppear { syncRouteState() }
+        .onReceive(viewModel.$eventRoutes) { _ in
+            syncRouteState()
+        }
         .sheet(isPresented: $showRoute) {
             EventRouteView(event: event)
+        }
+    }
+
+    private func syncRouteState() {
+        if let eventId = event.id {
+            hasRoute = viewModel.eventRoutes[eventId] != nil
+        } else {
+            hasRoute = false
         }
     }
 }

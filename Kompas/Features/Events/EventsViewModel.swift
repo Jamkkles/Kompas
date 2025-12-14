@@ -42,6 +42,27 @@ final class EventsViewModel: ObservableObject {
             }
         }
     }
+    
+    // Nueva función para ocultar/mostrar evento
+    func toggleEventVisibility(_ event: EventItem) {
+        guard let eventID = event.id else { return }
+        
+        let newHiddenState = !(event.isHidden ?? false)
+        let eventRef = db.collection("events").document(eventID)
+        
+        eventRef.updateData(["isHidden": newHiddenState]) { [weak self] error in
+            if let error = error {
+                print("❌ Error actualizando visibilidad: \(error.localizedDescription)")
+                self?.errorMessage = error.localizedDescription
+                self?.showErrorAlert = true
+            } else {
+                print("✅ Visibilidad del evento actualizada: \(newHiddenState ? "Oculto" : "Visible")")
+                if let index = self?.upcomingEvents.firstIndex(where: { $0.id == event.id }) {
+                    self?.upcomingEvents[index].isHidden = newHiddenState
+                }
+            }
+        }
+    }
 
     func deleteEvent(_ event: EventItem) {
         if let eventID = event.id {

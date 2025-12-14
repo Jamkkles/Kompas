@@ -11,6 +11,7 @@ struct EventItem: Codable, Identifiable {
     let date: Timestamp?
     let icon: EventIcon?
     let photoBase64: String?
+    var isHidden: Bool? // Nuevo campo para ocultar eventos
 
     var color: Color {
         // You can determine the color based on some logic,
