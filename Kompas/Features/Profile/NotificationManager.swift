@@ -1,9 +1,13 @@
 import UserNotifications
 import CoreLocation
-import UIKit  
+import UIKit
 
 final class NotificationManager {
     static let shared = NotificationManager()
+    
+    private func isNotificationsEnabled() -> Bool {
+        UserDefaults.standard.bool(forKey: "notificationsEnabled") || false
+    }
     
     func requestAuthorization() async -> Bool {
         do {
@@ -15,6 +19,12 @@ final class NotificationManager {
     }
     
     func notifyArrivalAtDestination(memberName: String, destination: String) {
+        // { changed code } Verificar que notificaciones estén habilitadas
+        guard isNotificationsEnabled() else {
+            print("⏸️ Notificaciones deshabilitadas")
+            return
+        }
+        
         let content = UNMutableNotificationContent()
         content.title = "¡\(memberName) llegó!"
         content.body = "\(memberName) ha llegado a \(destination)"
@@ -27,11 +37,19 @@ final class NotificationManager {
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("❌ Error enviando notificación: \(error)")
+            } else {
+                print("✅ Notificación enviada: \(memberName) llegó a \(destination)")
             }
         }
     }
     
     func notifyDeparture(memberName: String, origin: String) {
+        // { changed code }} Verificar que notificaciones estén habilitadas
+        guard isNotificationsEnabled() else {
+            print("⏸️ Notificaciones deshabilitadas")
+            return
+        }
+        
         let content = UNMutableNotificationContent()
         content.title = "\(memberName) se va"
         content.body = "\(memberName) está saliendo de \(origin)"
@@ -43,11 +61,17 @@ final class NotificationManager {
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("❌ Error enviando notificación: \(error)")
+            } else {
+                print("✅ Notificación enviada: \(memberName) salió de \(origin)")
             }
         }
     }
     
     func notifySOSActivation(memberName: String) {
+        // { changed code } Verificar que notificaciones estén habilitadas (SOS siempre se envía)
+        // Para SOS puedes comentar el guard si quieres que SIEMPRE se envíe incluso si está desactivado
+        // guard isNotificationsEnabled() else { return }
+        
         let content = UNMutableNotificationContent()
         content.title = "⚠️ EMERGENCIA"
         content.body = "\(memberName) ha activado el SOS"
@@ -60,6 +84,8 @@ final class NotificationManager {
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
                 print("❌ Error enviando notificación SOS: \(error)")
+            } else {
+                print("🚨 Notificación SOS enviada: \(memberName)")
             }
         }
     }

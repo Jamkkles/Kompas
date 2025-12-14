@@ -12,7 +12,9 @@ struct ProfileView: View {
     @State private var showPrivacy = false
     @State private var showSettings = false
     @State private var showRouteHistory = false
-
+    
+    @AppStorage("notificationsEnabled") private var notificationsEnabled = true
+    @State private var requestingPermissions = false  // { changed code } nuevo estado local
 
     var body: some View {
         NavigationView {
@@ -22,7 +24,7 @@ struct ProfileView: View {
                     profileHeader
                         .padding(.top, 20)
                         .padding(.bottom, 32)
-                    
+
                     // Tarjeta de información
                     if let user = session.user {
                         infoCard(user: user)
@@ -62,7 +64,7 @@ struct ProfileView: View {
             } message: {
                 Text("¿Estás seguro de que quieres cerrar sesión?")
             }
-            .sheet(isPresented: $showRouteHistory) { // Presentar el historial de rutas como hoja modal
+            .sheet(isPresented: $showRouteHistory) {
                 RouteHistoryView()
             }
             .sheet(isPresented: $showEditProfile) {
@@ -312,20 +314,56 @@ struct ProfileView: View {
     
     private var notificationsSheet: some View {
         NavigationView {
-            Form {
-                Section(header: Text("General")) {
-                    Toggle("Notificaciones Push", isOn: .constant(true))
-                    Toggle("Sonidos", isOn: .constant(true))
-                    Toggle("Vibración", isOn: .constant(false))
+            VStack(spacing: 0) {
+                // Header
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Notificaciones")
+                        .font(.system(size: 28, weight: .bold))
+                    
+                    Text("Controla cómo recibes alertas")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
+                
+                Divider()
+                
+                // Contenido
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Toggle de notificaciones
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Activar notificaciones")
+                                    .font(.system(size: 16, weight: .semibold))
+                            }
+                            
+                            Spacer()
+                            
+                            Toggle("", isOn: $notificationsEnabled)
+                                .onChange(of: notificationsEnabled) { oldValue, newValue in
+                                    if newValue {
+                                        Task {
+                                            let granted = await NotificationManager.shared.requestAuthorization()
+                                            if !granted {
+                                                notificationsEnabled = false
+                                                print("❌ Permisos rechazados")
+                                            } else {
+                                                print("✅ Permisos concedidos")
+                                            }
+                                        }
+                                    }
+                                }
+                        }
+                        .padding(16)
+                        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .padding(20)
                 }
                 
-                Section(header: Text("Alertas")) {
-                    Toggle("Nuevos mensajes", isOn: .constant(true))
-                    Toggle("Invitaciones a grupos", isOn: .constant(true))
-                    Toggle("Ubicación compartida", isOn: .constant(false))
-                }
+                Spacer()
             }
-            .navigationTitle("Notificaciones")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -374,34 +412,75 @@ struct ProfileView: View {
                     HStack {
                         Text("Idioma")
                         Spacer()
-                        Text("Español")
-                            .foregroundStyle(.secondary)
+                        Text("Español").foregroundStyle(.secondary)
                     }
-                    
                     Picker("Tema", selection: .constant("auto")) {
                         Text("Automático").tag("auto")
                         Text("Claro").tag("light")
                         Text("Oscuro").tag("dark")
                     }
-                } header: {
-                    Text("Apariencia")
-                }
+                } header: { Text("Apariencia") }
                 
                 Section {
                     Toggle("Precisión de ubicación alta", isOn: .constant(true))
                     Toggle("Actualizaciones en segundo plano", isOn: .constant(false))
-                } header: {
-                    Text("Mapa")
-                } footer: {
+                } header: { Text("Mapa") } footer: {
                     Text("La precisión alta consume más batería pero mejora la exactitud")
+                }
+                
+                // { changed code } NUEVA SECCIÓN DE TESTING
+                Section {
+                    Button {
+                        NotificationManager.shared.notifyArrivalAtDestination(
+                            memberName: session.user?.name ?? "Usuario",
+                            destination: "Casa"
+                        )
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "bell.badge.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Probar notificación llegada")
+                                .font(.system(.body, design: .rounded, weight: .medium))
+                        }
+                        .foregroundStyle(Brand.tint)
+                    }
+                    
+                    Button {
+                        NotificationManager.shared.notifyDeparture(
+                            memberName: session.user?.name ?? "Usuario",
+                            origin: "Trabajo"
+                        )
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "bell.badge.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Probar notificación salida")
+                                .font(.system(.body, design: .rounded, weight: .medium))
+                        }
+                        .foregroundStyle(Brand.tint)
+                    }
+                    
+                    Button {
+                        NotificationManager.shared.notifySOSActivation(
+                            memberName: session.user?.name ?? "Usuario"
+                        )
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "bell.badge.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Probar notificación SOS")
+                                .font(.system(.body, design: .rounded, weight: .medium))
+                        }
+                        .foregroundStyle(.red)
+                    }
+                } header: { Text("Testing") } footer: {
+                    Text("Botones para probar notificaciones en desarrollo")
                 }
                 
                 Section {
                     Button("Limpiar caché") {}
                     Button("Reportar un problema") {}
-                } header: {
-                    Text("Soporte")
-                }
+                } header: { Text("Soporte") }
             }
             .navigationTitle("Configuración")
             .navigationBarTitleDisplayMode(.inline)
