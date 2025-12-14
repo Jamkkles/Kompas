@@ -179,8 +179,14 @@ struct ProfileView: View {
         .padding(.horizontal, 16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(cardBackgroundColor)
+                .fill(denseCardBackgroundColor)      
         )
+        .glassEffect(in: .rect(cornerRadius: 22)) // 
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
     }
     
     // MARK: - Options Section
@@ -216,11 +222,11 @@ struct ProfileView: View {
                 .padding(.leading, 56)
 
             ProfileOptionRow(
-                icon: "clock.arrow.circlepath", // Icono para el historial de rutas
+                icon: "clock.arrow.circlepath",
                 title: "Historial de Rutas",
                 iconColor: .blue
             ) {
-                showRouteHistory = true // Mostrar la hoja modal del historial de rutas
+                showRouteHistory = true
             }
 
             Divider()
@@ -245,10 +251,17 @@ struct ProfileView: View {
                 showSettings = true
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(cardBackgroundColor)
+        .padding(12)
+        .background(                                     
+            RoundedRectangle(cornerRadius: 22)
+                .fill(denseCardBackgroundColor)
         )
+        .glassEffect(in: .rect(cornerRadius: 22))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
     }
     
     // MARK: - Logout Button
@@ -441,11 +454,17 @@ struct ProfileView: View {
     }
     
     // MARK: - Helpers
-    
+
     private var cardBackgroundColor: Color {
         colorScheme == .dark
             ? Color(.systemGray6).opacity(0.5)
             : Color(.systemBackground)
+    }
+
+    private var denseCardBackgroundColor: Color {        
+        colorScheme == .dark
+            ? Color(.systemGray6).opacity(0.8)     
+            : Color(.systemBackground).opacity(0.95)    
     }
 }
 
