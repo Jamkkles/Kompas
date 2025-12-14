@@ -18,11 +18,11 @@ private enum MapVisualMode {
 struct MapHomeView: View {
     @EnvironmentObject var session: SessionStore
     @EnvironmentObject var locationManager: LocationManager
+    @EnvironmentObject var eventsVM: EventsViewModel
 
     @StateObject private var groupRepo = GroupRepository()
     @StateObject private var presenceRepo = PresenceRepository()
     @StateObject private var searchVM = MapSearchVM()
-    @StateObject private var eventsVM = EventsViewModel()
 
 
     @State private var selectedGroup: UserGroup?
@@ -42,6 +42,8 @@ struct MapHomeView: View {
     @State private var showingEventImageSheet = false
 
     @State private var showEventRoutes = false // Nuevo toggle para mostrar rutas
+
+    @State private var showRouteManagementSheet = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -72,11 +74,39 @@ struct MapHomeView: View {
                                 }
                             }
                         } label: {
-                            Image(systemName: showEventRoutes ? "location.north.line.fill" : "location.north.line")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(showEventRoutes ? Brand.tint : .secondary)
-                                .frame(width: 44, height: 44)
-                                .background(Circle().fill(.ultraThinMaterial))
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: "arrow.triangle.turn.up.right.circle.fill") // icono de rutas activas
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(showEventRoutes ? Brand.tint : .secondary)
+                                    .frame(width: 44, height: 44)
+                                    .background(Circle().fill(.ultraThinMaterial))
+                                
+                                if showEventRoutes, !eventsVM.eventRoutes.isEmpty {
+                                    Text("\(eventsVM.eventRoutes.count)")
+                                        .font(.system(size: 10, weight: .bold))
+                                        .foregroundStyle(.white)
+                                        .padding(6)
+                                        .background(Circle().fill(Brand.tint))
+                                        .offset(x: 6, y: -6)
+                                }
+                            }
+                        }
+                        
+                        // Nuevo botón para cancelar rutas (solo visible cuando hay rutas activas)
+                        if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    showEventRoutes = false
+                                    eventsVM.clearRoutes()
+                                }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.red)
+                                    .frame(width: 44, height: 44)
+                                    .background(Circle().fill(.ultraThinMaterial))
+                            }
+                            .transition(.scale.combined(with: .opacity))
                         }
                     }
                     .padding(.horizontal, 16)
@@ -136,15 +166,39 @@ struct MapHomeView: View {
                     showSpecificEventRoute(eventId: eventId)
                 }
             }
+            
+            // Escuchar notificaciones para cancelar rutas específicas
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("CancelEventRoute"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                if let eventId = notification.object as? String {
+                    print("🗑️ Cancelando ruta específica para evento: \(eventId)")
+                    eventsVM.clearRoute(for: eventId)
+                    
+                    // Si no quedan rutas, desactivar el modo de rutas
+                    if eventsVM.eventRoutes.isEmpty {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            showEventRoutes = false
+                        }
+                    }
+                }
+            }
         }
         .onDisappear {
             presenceRepo.stopListening()
             groupRepo.stopListening()
             
-            // Remover el observer
+            // Remover los observers
             NotificationCenter.default.removeObserver(
                 self,
                 name: NSNotification.Name("ShowEventRoute"),
+                object: nil
+            )
+            NotificationCenter.default.removeObserver(
+                self,
+                name: NSNotification.Name("CancelEventRoute"),
                 object: nil
             )
         }
@@ -208,6 +262,36 @@ struct MapHomeView: View {
         }
         .sheet(isPresented: $showingEventImageSheet) {
             EventImageSheet(photoBase64: selectedEventImage)
+        }
+        .sheet(isPresented: $showRouteManagementSheet) {
+            RouteManagementSheet(
+                eventRoutes: eventsVM.eventRoutes,
+                upcomingEvents: eventsVM.upcomingEvents,
+                onCancelRoute: { eventId in
+                    eventsVM.clearRoute(for: eventId)
+                    if eventsVM.eventRoutes.isEmpty {
+                        showEventRoutes = false
+                    }
+                },
+                onCancelAllRoutes: {
+                    eventsVM.clearRoutes()
+                    showEventRoutes = false
+                },
+                onFocusRoute: { eventId in
+                    if let route = eventsVM.eventRoutes[eventId] {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            camera = .region(
+                                MKCoordinateRegion(
+                                    center: route.polyline.coordinate,
+                                    latitudinalMeters: route.distance * 1.2,
+                                    longitudinalMeters: route.distance * 1.2
+                                )
+                            )
+                        }
+                    }
+                    showRouteManagementSheet = false
+                }
+            )
         }
     }
 
@@ -372,9 +456,9 @@ struct MapHomeView: View {
     }
 
     // MARK: - Controles flotantes
-
     private var mapControls: some View {
         VStack(spacing: 12) {
+            // Botón de modos de mapa
             Button {
                 showMapModes = true
             } label: {
@@ -388,6 +472,7 @@ struct MapHomeView: View {
             }
             .clipShape(Circle())
             
+            // Botón de ubicación actual
             Button {
                 if let coord = locationManager.userLocation {
                     searchedLocation = nil
@@ -405,6 +490,21 @@ struct MapHomeView: View {
                     )
             }
             .clipShape(Circle())
+            
+            // Nuevo botón para gestión de rutas (solo visible cuando hay rutas activas)
+            if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
+                Button {
+                    showRouteManagementSheet = true
+                } label: {
+                    Image(systemName: "arrow.triangle.turn.up.right.circle.fill") // icono válido
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(Brand.tint)
+                        .frame(width: 44, height: 44)
+                        .background(Circle().fill(.ultraThinMaterial))
+                }
+                .clipShape(Circle())
+                .transition(.scale.combined(with: .opacity))
+            }
         }
         .padding(8)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
@@ -485,19 +585,22 @@ struct MapHomeView: View {
 
                 Spacer()
                 
-                // Indicador de rutas
+                // Indicador de rutas mejorado
                 if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
-                    HStack(spacing: 4) {
-                        Image(systemName: "location.north.line.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(Brand.tint)
-                        Text("\(eventsVM.eventRoutes.count) ruta\(eventsVM.eventRoutes.count == 1 ? "" : "s")")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(Brand.tint)
+                    HStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "location.north.line.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Brand.tint)
+                            
+                            Text("\(eventsVM.eventRoutes.count) ruta\(eventsVM.eventRoutes.count == 1 ? "" : "s")")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(Brand.tint)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Brand.tint.opacity(0.1), in: Capsule())
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Brand.tint.opacity(0.1), in: Capsule())
                 }
 
                 if let name = selectedGroup?.name {

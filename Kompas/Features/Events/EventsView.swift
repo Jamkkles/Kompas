@@ -4,9 +4,7 @@ import CoreLocation
 struct EventsView: View {
     @State private var showingCreateEvent = false
     @EnvironmentObject var session: SessionStore
-    @StateObject private var viewModel = EventsViewModel()
-    
-    // Agregar binding para el tab seleccionado
+    @EnvironmentObject var viewModel: EventsViewModel
     @Binding var selectedTab: Int
 
     var body: some View {

@@ -100,6 +100,13 @@ final class EventsViewModel: ObservableObject {
     }
     
     func clearRoutes() {
+        print("🗑️ Limpiando todas las rutas")
         eventRoutes.removeAll()
+    }
+    
+    // Nueva función para cancelar una ruta específica
+    func clearRoute(for eventId: String) {
+        print("🗑️ Cancelando ruta para evento: \(eventId)")
+        eventRoutes.removeValue(forKey: eventId)
     }
 }

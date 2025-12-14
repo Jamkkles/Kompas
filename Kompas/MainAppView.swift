@@ -5,11 +5,13 @@ struct MainAppView: View {
     @EnvironmentObject var session: SessionStore
     @EnvironmentObject var locationManager: LocationManager
     @State private var selectedTab = 0
+    @StateObject private var eventsVM = EventsViewModel()
 
     var body: some View {
         TabView(selection: $selectedTab) {
             // Nuevo mapa (el avanzado con selector de grupo, lupa, etc.)
             MapHomeView()
+                .environmentObject(eventsVM)
                 .tabItem {
                     Label("Mapa", systemImage: "map.fill")
                 }
@@ -22,6 +24,7 @@ struct MainAppView: View {
                 .tag(1)
 
             EventsView(selectedTab: $selectedTab)
+                .environmentObject(eventsVM)
                 .tabItem {
                     Label("Eventos", systemImage: "calendar")
                 }
