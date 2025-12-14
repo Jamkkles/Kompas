@@ -31,35 +31,6 @@ struct EventDetailView: View {
 
             Section {
                 VStack(spacing: 12) {
-                    Button("Ir a evento") {
-                        // Usar el LocationManager del environment object
-                        if let userLocation = locationManager.userLocation {
-                            print("🗺️ Calculando ruta desde: \(userLocation)")
-                            print("🎯 Hacia evento: \(event.name) en \(event.location)")
-                            
-                            // Calcular la ruta para este evento específico
-                            viewModel.calculateRoute(for: event, from: userLocation)
-                            
-                            // Activar el modo de rutas en el mapa principal
-                            NotificationCenter.default.post(
-                                name: NSNotification.Name("ShowEventRoute"),
-                                object: event.id
-                            )
-                            
-                            print("📡 Notificación enviada para evento: \(event.id ?? "sin ID")")
-                            
-                            // Cambiar al tab del mapa
-                            selectedTab = 0
-                            
-                            // Cerrar la vista actual
-                            dismiss()
-                        } else {
-                            print("❌ No hay ubicación disponible")
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.blue)
-                    
                     // Botón para cancelar ruta si existe
                     if hasRoute {
                         Button("Cancelar ruta") {
@@ -73,6 +44,36 @@ struct EventDetailView: View {
                         }
                         .buttonStyle(.bordered)
                         .tint(.red)
+                    } else {
+                        // Si no hay ruta activa, mostrar botón de ir a evento
+                        Button("Ir a evento") {
+                            // Usar el LocationManager del environment object
+                            if let userLocation = locationManager.userLocation {
+                                print("🗺️ Calculando ruta desde: \(userLocation)")
+                                print("🎯 Hacia evento: \(event.name) en \(event.location)")
+                                
+                                // Calcular la ruta para este evento específico
+                                viewModel.calculateRoute(for: event, from: userLocation)
+                                
+                                // Activar el modo de rutas en el mapa principal
+                                NotificationCenter.default.post(
+                                    name: NSNotification.Name("ShowEventRoute"),
+                                    object: event.id
+                                )
+                                
+                                print("📡 Notificación enviada para evento: \(event.id ?? "sin ID")")
+                                
+                                // Cambiar al tab del mapa
+                                selectedTab = 0
+                                
+                                // Cerrar la vista actual
+                                dismiss()
+                            } else {
+                                print("❌ No hay ubicación disponible")
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.blue)
                     }
                 }
             }
