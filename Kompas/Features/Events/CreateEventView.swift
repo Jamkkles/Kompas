@@ -111,6 +111,13 @@ struct CreateEventView: View {
             }
             .navigationTitle("Nuevo evento")
             .navigationBarTitleDisplayMode(.inline)
+                       .toolbar {
+               ToolbarItem(placement: .cancellationAction) {
+                   Button("Cancelar") {
+                       dismiss()
+                   }
+               }
+           }
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(image: $inputImage, sourceType: imagePickerSourceType)
             }

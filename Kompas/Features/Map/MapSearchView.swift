@@ -9,7 +9,7 @@ class MapSearchVM: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    func search(query: String) {
+    func search(query: String, region: MKCoordinateRegion? = nil) {
         guard !query.isEmpty else {
             results = []
             return
@@ -19,6 +19,9 @@ class MapSearchVM: ObservableObject {
         
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = query
+        if let r = region {
+            request.region = r
+        }
         
         let search = MKLocalSearch(request: request)
         search.start { [weak self] response, error in

@@ -502,7 +502,16 @@ struct MapHomeView: View {
             }
             .glassEffect(.regular.interactive(), in: .circle)
             
-            // (Se eliminó el botón de búsqueda duplicado aquí — se mantiene el que está más arriba)
+            // Botón de búsqueda - solo ícono (superior)
+            Button {
+                showSearch = true
+            } label: {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .padding(12)
+            }
+            .glassEffect(.regular.interactive(), in: .circle)
 
             // botón verde para crear evento (mismo estilo/tamaño que los otros controles, solo tint verde)
             if searchedLocation != nil {
@@ -516,6 +525,20 @@ struct MapHomeView: View {
                 }
                 .glassEffect(.regular.tint(Color.green), in: .circle)
                 .shadow(color: Color.green.opacity(0.15), radius: 6, x: 0, y: 3)
+                .transition(.scale.combined(with: .opacity))
+                
+                // changed code: botón para borrar la selección de búsqueda (mismo tamaño/estilo que los demás)
+                Button {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                        searchedLocation = nil
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .padding(12)
+                }
+                .glassEffect(.regular.interactive(), in: .circle)
                 .transition(.scale.combined(with: .opacity))
             }
         }
