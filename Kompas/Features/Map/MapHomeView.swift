@@ -985,6 +985,7 @@ private struct EnhancedMapSearchView: View {
     let onSelectLocation: (MKMapItem) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    @FocusState private var searchFieldFocused: Bool // changed code
 
     var body: some View {
         NavigationView {
@@ -999,6 +1000,7 @@ private struct EnhancedMapSearchView: View {
                         TextField("Buscar lugares", text: $searchText)
                             .font(.system(size: 16))
                             .submitLabel(.search)
+                            .focused($searchFieldFocused) // changed code
                             .onSubmit {
                                 vm.search(query: searchText)
                             }
@@ -1014,8 +1016,8 @@ private struct EnhancedMapSearchView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 16)
                     .padding(.vertical, 12)
+                    .padding(.horizontal, 16)
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
                 }
@@ -1023,7 +1025,7 @@ private struct EnhancedMapSearchView: View {
                 .padding(.vertical, 12)
                 
                 Divider()
-
+                
                 // Resultados
                 if vm.results.isEmpty && searchText.isEmpty {
                     emptySearchState
@@ -1041,6 +1043,12 @@ private struct EnhancedMapSearchView: View {
                         dismiss()
                     }
                 }
+            }
+        }
+        .onAppear {
+            // pequeño delay para asegurar que el TextField se convierta en first responder
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                searchFieldFocused = true
             }
         }
     }
