@@ -501,17 +501,7 @@ struct MapHomeView: View {
                     .padding(12)
             }
             .glassEffect(.regular.interactive(), in: .circle)
-            
-            // Botón de búsqueda - solo ícono (superior)
-            Button {
-                showSearch = true
-            } label: {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .padding(12)
-            }
-            .glassEffect(.regular.interactive(), in: .circle)
+
 
             // botón verde para crear evento (mismo estilo/tamaño que los otros controles, solo tint verde)
             if searchedLocation != nil {
