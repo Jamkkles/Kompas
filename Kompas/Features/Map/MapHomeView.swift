@@ -113,16 +113,19 @@ struct MapHomeView: View {
                     )
                 }
 
-                // VELOCÍMETRO
+                // VELOCÍMETRO (solo visible cuando hay rutas activas Y velocidad > 0)
                 VStack {
                     Spacer()
                     HStack {
-                        SpeedometerView(speed: locationManager.speed)
-                            .padding(.leading, 16)
-                            .padding(.bottom, controlsBottomPadding(safeBottom: safeBottom))
-                            .opacity(sheetPosition == .expanded ? 0 : 1)
+                        if showEventRoutes && !eventsVM.eventRoutes.isEmpty && locationManager.speed > 0.5 {
+                            SpeedometerView(speed: locationManager.speed)
+                                .padding(.leading, 16)
+                                .padding(.bottom, controlsBottomPadding(safeBottom: safeBottom))
+                                .transition(.scale.combined(with: .opacity))
+                        }
                         Spacer()
                     }
+                    .opacity(sheetPosition == .expanded ? 0 : 1)
                 }
             }
         }
@@ -459,7 +462,7 @@ struct MapHomeView: View {
         }
     }
 
-    // MARK: - Controles flotantes
+    // MARK: - Controles flotantes más limpios (sin contenedor)
     private var mapControls: some View {
         VStack(spacing: 12) {
             // Botón de modos de mapa
@@ -470,9 +473,8 @@ struct MapHomeView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.primary)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle().fill(.ultraThinMaterial)
-                    )
+                    .background(Circle().fill(.ultraThinMaterial))
+                    .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
             }
             .clipShape(Circle())
             
@@ -489,82 +491,56 @@ struct MapHomeView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.primary)
                     .frame(width: 44, height: 44)
-                    .background(
-                        Circle().fill(.ultraThinMaterial)
-                    )
+                    .background(Circle().fill(.ultraThinMaterial))
+                    .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
             }
             .clipShape(Circle())
             
-            // Nuevo botón para gestión de rutas (solo visible cuando hay rutas activas)
+            // Botón para gestión de rutas (solo visible cuando hay rutas activas)
             if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
                 Button {
                     showRouteManagementSheet = true
                 } label: {
-                    Image(systemName: "arrow.triangle.turn.up.right.circle.fill") // icono válido
+                    Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(Brand.tint)
                         .frame(width: 44, height: 44)
                         .background(Circle().fill(.ultraThinMaterial))
+                        .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
                 }
                 .clipShape(Circle())
                 .transition(.scale.combined(with: .opacity))
             }
         }
-        .padding(8)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 
-    // MARK: - Top bar simplificada
+    // MARK: - Top bar minimalista
     private var topBar: some View {
         HStack(spacing: 12) {
-            // Grupo - SOLO NOMBRE
+            // Botón de grupos - solo ícono
             Button {
                 showGroupPicker = true
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "person.3.fill")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Brand.tint)
-                    
-                    Text(selectedGroup?.name ?? "Seleccionar")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                    
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 11)
-                .background(.ultraThinMaterial, in: Capsule())
+                Image(systemName: "person.3.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(.ultraThinMaterial))
+                    .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
             }
 
             Spacer()
 
-            // Buscar
+            // Botón de búsqueda - solo ícono
             Button {
                 showSearch = true
             } label: {
-                HStack(spacing: 8) {
-                    ZStack {
-                        Circle()
-                            .fill(Brand.tint.opacity(0.15))
-                            .frame(width: 32, height: 32)
-
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Brand.tint)
-                    }
-
-                    Text("Buscar")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.primary)
-                }
-                .padding(.leading, 8)
-                .padding(.trailing, 16)
-                .padding(.vertical, 8)
-                .background(.ultraThinMaterial, in: Capsule())
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(.ultraThinMaterial))
+                    .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
             }
         }
     }
