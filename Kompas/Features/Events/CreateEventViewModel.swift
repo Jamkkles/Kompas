@@ -11,8 +11,15 @@ class CreateEventViewModel: ObservableObject {
 
     private let session: SessionStore
 
-    init(session: SessionStore) {
+    init(session: SessionStore, initialCoordinate: CLLocationCoordinate2D? = nil) {
         self.session = session
+        if let coord = initialCoordinate {
+            self.eventCoordinate = coord
+            self.camera = .region(
+                MKCoordinateRegion(center: coord,
+                                   span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
+            )
+        }
     }
 
     @MainActor

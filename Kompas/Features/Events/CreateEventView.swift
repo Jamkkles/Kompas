@@ -18,8 +18,12 @@ struct CreateEventView: View {
     // Estado del mapa
     @State private var hasCenteredMap = false
 
-    init(session: SessionStore) {
-        _viewModel = StateObject(wrappedValue: CreateEventViewModel(session: session))
+    // changed code: aceptar coordenada inicial opcional y prellenar el viewModel
+    init(session: SessionStore, initialCoordinate: CLLocationCoordinate2D? = nil) {
+        // Crear la instancia del ViewModel antes de instalar el StateObject
+        let vm = CreateEventViewModel(session: session, initialCoordinate: initialCoordinate)
+        _viewModel = StateObject(wrappedValue: vm)
+        _hasCenteredMap = State(initialValue: initialCoordinate != nil)
     }
 
     var body: some View {
@@ -124,6 +128,15 @@ struct CreateEventView: View {
                 ])
             }
         }
+        // <-- changed code: asegurar que si ya hay coordenada precargada, el mapa se centra al aparecer
+        .onAppear {
+            if let coord = viewModel.eventCoordinate {
+                viewModel.camera = .region(
+                    MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
+                )
+                hasCenteredMap = true
+            }
+        }
         .onReceive(
             locationManager.$userLocation
                 .compactMap { $0 }
@@ -133,13 +146,15 @@ struct CreateEventView: View {
             // Centramos solo una vez al obtener la ubicación
             if !hasCenteredMap {
                 hasCenteredMap = true
-                viewModel.eventCoordinate = coord
-                viewModel.camera = .region(
-                    MKCoordinateRegion(
-                        center: coord,
-                        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+                // No sobrescribir si ya hay una coordenada inicial (p. ej. desde búsqueda)
+                if viewModel.eventCoordinate == nil {
+                    viewModel.eventCoordinate = coord
+                    viewModel.camera = .region(
+                        MKCoordinateRegion(center: coord,
+                                           span: MKCoordinateSpan(latitudeDelta: 0.06,
+                                                                   longitudeDelta: 0.06))
                     )
-                )
+                }
             }
         }
     }

@@ -24,7 +24,6 @@ struct MapHomeView: View {
     @StateObject private var presenceRepo = PresenceRepository()
     @StateObject private var searchVM = MapSearchVM()
 
-
     @State private var selectedGroup: UserGroup?
     @State private var showGroupPicker = false
     @State private var showSearch = false
@@ -35,6 +34,10 @@ struct MapHomeView: View {
 
     @State private var sheetPosition: SheetPosition = .medium
     @State private var mapMode: MapVisualMode = .standard
+
+    // changed code: estado para mostrar sheet de crear evento desde búsqueda
+    @State private var showCreateAtSearch = false
+
     @State private var showMapModes = false
     @State private var mapHeading: CLLocationDirection = 0
 
@@ -298,6 +301,15 @@ struct MapHomeView: View {
                 }
             )
         }
+        .sheet(isPresented: $showCreateAtSearch) {
+            if let coord = searchedLocation {
+                CreateEventView(session: session, initialCoordinate: coord)
+                    .environmentObject(locationManager)
+            } else {
+                CreateEventView(session: session)
+                    .environmentObject(locationManager)
+            }
+        }
     }
 
     // MARK: - Funciones auxiliares
@@ -490,17 +502,20 @@ struct MapHomeView: View {
             }
             .glassEffect(.regular.interactive(), in: .circle)
             
-            // Botón para gestión de rutas (solo visible cuando hay rutas activas)
-            if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
+            // (Se eliminó el botón de búsqueda duplicado aquí — se mantiene el que está más arriba)
+
+            // botón verde para crear evento (mismo estilo/tamaño que los otros controles, solo tint verde)
+            if searchedLocation != nil {
                 Button {
-                    showRouteManagementSheet = true
+                    showCreateAtSearch = true
                 } label: {
-                    Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
+                    Image(systemName: "calendar.badge.plus")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Brand.tint)
+                        .foregroundStyle(.white)
                         .padding(12)
                 }
-                .glassEffect(.regular.tint(Brand.tint).interactive(), in: .circle)
+                .glassEffect(.regular.tint(Color.green), in: .circle)
+                .shadow(color: Color.green.opacity(0.15), radius: 6, x: 0, y: 3)
                 .transition(.scale.combined(with: .opacity))
             }
         }
