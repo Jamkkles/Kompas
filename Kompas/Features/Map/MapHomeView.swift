@@ -60,48 +60,66 @@ struct MapHomeView: View {
                 theMap
                     .ignoresSafeArea()
 
-                // TOP BAR (sin botón de activar todas las rutas)
-                VStack {
-                    HStack {
-                        topBar
+               // Contenedor de efectos Liquid Glass para los controles flotantes
+               GlassEffectContainer(spacing: 12) {
+                    // TOP BAR (sin botón de activar todas las rutas)
+                    VStack {
+                        HStack {
+                            topBar
+                            
+                            Spacer()
+                            
+                            // Botón cancelar rutas (se mantiene, solo visible si hay rutas)
+                            if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
+                                Button {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                        showEventRoutes = false
+                                        eventsVM.clearRoutes()
+                                    }
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.red)
+                                        .frame(width: 44, height: 44)
+                                }
+                                .glassEffect(.regular.tint(.red).interactive())
+                                .transition(.scale.combined(with: .opacity))
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, safeTop + 2) // sube los botones
+                        .opacity(sheetPosition == .expanded ? 0 : 1)
                         
                         Spacer()
-                        
-                        // Botón cancelar rutas (se mantiene, solo visible si hay rutas)
-                        if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
-                            Button {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                    showEventRoutes = false
-                                    eventsVM.clearRoutes()
-                                }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(.red)
-                                    .frame(width: 44, height: 44)
-                                    .background(Circle().fill(.ultraThinMaterial))
-                            }
-                            .transition(.scale.combined(with: .opacity))
+                    }
+                    
+                    // CONTROLES FLOTANTES
+                    VStack {
+                        Spacer()
+                        HStack {
+                            Spacer()
+                            mapControls
+                                .padding(.trailing, 16)
+                                .padding(.bottom, controlsBottomPadding(safeBottom: safeBottom))
+                                .opacity(sheetPosition == .expanded ? 0 : 1)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .opacity(sheetPosition == .expanded ? 0 : 1)
-                    
-                    Spacer()
-                }
-                
-                // CONTROLES FLOTANTES
-                VStack {
-                    Spacer()
-                    HStack {
+
+                    // VELOCÍMETRO (solo visible cuando hay rutas activas Y velocidad > 0)
+                    VStack {
                         Spacer()
-                        mapControls
-                            .padding(.trailing, 16)
-                            .padding(.bottom, controlsBottomPadding(safeBottom: safeBottom))
-                            .opacity(sheetPosition == .expanded ? 0 : 1)
+                        HStack {
+                            if showEventRoutes && !eventsVM.eventRoutes.isEmpty && locationManager.speed > 0.5 {
+                                SpeedometerView(speed: locationManager.speed)
+                                    .padding(.leading, 16)
+                                    .padding(.bottom, controlsBottomPadding(safeBottom: safeBottom))
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                            Spacer()
+                        }
+                        .opacity(sheetPosition == .expanded ? 0 : 1)
                     }
-                }
+               }
 
                 // SHEET DE MIEMBROS
                 VStack {
@@ -111,21 +129,6 @@ struct MapHomeView: View {
                         safeTop: safeTop,
                         safeBottom: safeBottom
                     )
-                }
-
-                // VELOCÍMETRO (solo visible cuando hay rutas activas Y velocidad > 0)
-                VStack {
-                    Spacer()
-                    HStack {
-                        if showEventRoutes && !eventsVM.eventRoutes.isEmpty && locationManager.speed > 0.5 {
-                            SpeedometerView(speed: locationManager.speed)
-                                .padding(.leading, 16)
-                                .padding(.bottom, controlsBottomPadding(safeBottom: safeBottom))
-                                .transition(.scale.combined(with: .opacity))
-                        }
-                        Spacer()
-                    }
-                    .opacity(sheetPosition == .expanded ? 0 : 1)
                 }
             }
         }
@@ -462,7 +465,7 @@ struct MapHomeView: View {
         }
     }
 
-    // MARK: - Controles flotantes más limpios (sin contenedor)
+    // MARK: - Controles flotantes con Liquid Glass
     private var mapControls: some View {
         VStack(spacing: 12) {
             // Botón de modos de mapa
@@ -472,11 +475,9 @@ struct MapHomeView: View {
                 Image(systemName: "map")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(.ultraThinMaterial))
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
+                    .padding(12)
             }
-            .clipShape(Circle())
+            .glassEffect(.regular.interactive(), in: .circle)
             
             // Botón de ubicación actual
             Button {
@@ -490,11 +491,9 @@ struct MapHomeView: View {
                 Image(systemName: "location.fill")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(.ultraThinMaterial))
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
+                    .padding(12)
             }
-            .clipShape(Circle())
+            .glassEffect(.regular.interactive(), in: .circle)
             
             // Botón para gestión de rutas (solo visible cuando hay rutas activas)
             if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
@@ -504,17 +503,15 @@ struct MapHomeView: View {
                     Image(systemName: "arrow.triangle.turn.up.right.circle.fill")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(Brand.tint)
-                        .frame(width: 44, height: 44)
-                        .background(Circle().fill(.ultraThinMaterial))
-                        .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
+                        .padding(12)
                 }
-                .clipShape(Circle())
+                .glassEffect(.regular.tint(Brand.tint).interactive(), in: .circle)
                 .transition(.scale.combined(with: .opacity))
             }
         }
     }
 
-    // MARK: - Top bar minimalista
+    // MARK: - Top bar con Liquid Glass
     private var topBar: some View {
         HStack(spacing: 12) {
             // Botón de grupos - solo ícono
@@ -524,10 +521,9 @@ struct MapHomeView: View {
                 Image(systemName: "person.3.fill")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(.ultraThinMaterial))
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
+                    .padding(12)
             }
+            .glassEffect(.regular.interactive(), in: .circle)
 
             Spacer()
 
@@ -538,10 +534,9 @@ struct MapHomeView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.primary)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(.ultraThinMaterial))
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
+                    .padding(12)
             }
+            .glassEffect(.regular.interactive(), in: .circle)
         }
     }
 
@@ -554,7 +549,7 @@ struct MapHomeView: View {
         VStack(spacing: 0) {
             HStack {
                  Spacer()
-                 Capsule().fill(Color.secondary.opacity(0.25)).frame(width: 40, height: 4).padding(.top, 6)
+                 Capsule().fill(Color.secondary.opacity(0.1)).frame(width: 40, height: 4).padding(.top, 6)
                  Spacer()
             }
 
@@ -562,25 +557,22 @@ struct MapHomeView: View {
                 Text("Miembros del grupo")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.primary)
-
                 Spacer()
                 
-                // Indicador de rutas mejorado
+                // Indicador de rutas con Liquid Glass
                 if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
-                    HStack(spacing: 8) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "location.north.line.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(Brand.tint)
-                            
-                            Text("\(eventsVM.eventRoutes.count) ruta\(eventsVM.eventRoutes.count == 1 ? "" : "s")")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(Brand.tint)
-                        }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Brand.tint.opacity(0.1), in: Capsule())
+                    HStack(spacing: 4) {
+                        Image(systemName: "location.north.line.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Brand.tint)
+                        
+                        Text("\(eventsVM.eventRoutes.count) ruta\(eventsVM.eventRoutes.count == 1 ? "" : "s")")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Brand.tint)
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .glassEffect(.regular.tint(Brand.tint))
                 }
 
                 if let name = selectedGroup?.name {
@@ -610,7 +602,6 @@ struct MapHomeView: View {
                         )
                         Spacer()
                     }
-                    .padding(.bottom, 10)
                 } else {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 16) {
@@ -677,13 +668,15 @@ struct MapHomeView: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: height, alignment: .top)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 26))
-        .gesture(
+        .glassEffect(.regular, in: .rect(cornerRadius: 26))
+        .contentShape(Rectangle()) // asegura captura de taps/gestos
+        .highPriorityGesture(
             DragGesture()
                 .onEnded { value in
                     handleSheetDrag(translation: value.translation.height)
                 }
         )
+        .zIndex(2) // por encima del mapa
     }
 
     private func setSelectedGroup(_ g: UserGroup) {
@@ -697,22 +690,29 @@ struct MapHomeView: View {
 private struct SpeedometerView: View {
     let speed: CLLocationSpeed
 
-    // Convert speed from m/s to km/h
     private var speedInKmH: Double {
         return speed * 3.6
     }
 
     var body: some View {
-        VStack(spacing: 4) {
-            Text(String(format: "%.0f", speedInKmH))
-                .font(.system(size: 32, weight: .bold))
-                .foregroundStyle(.primary)
-            Text("km/h")
+        HStack(spacing: 8) {
+            Image(systemName: "gauge.medium")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Brand.tint)
+            
+            VStack(alignment: .leading, spacing: 0) {
+                Text(String(format: "%.0f", speedInKmH))
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(.primary)
+                
+                Text("km/h")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .glassEffect(.regular.tint(Brand.tint))
     }
 }
 
