@@ -40,6 +40,7 @@ struct MapHomeView: View {
 
     @State private var selectedEventImage: String?
     @State private var showingEventImageSheet = false
+    @State private var selectedEventForSheet: EventItem?
 
     @State private var showEventRoutes = false // Nuevo toggle para mostrar rutas
 
@@ -232,7 +233,7 @@ struct MapHomeView: View {
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingEventImageSheet) {
-            EventImageSheet(photoBase64: selectedEventImage)
+            EventImageSheet(photoBase64: selectedEventImage, event: selectedEventForSheet)
         }
         .sheet(isPresented: $showRouteManagementSheet) {
             RouteManagementSheet(
@@ -333,6 +334,7 @@ struct MapHomeView: View {
                     Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
                         EventPin(name: event.name, icon: event.icon, date: date.dateValue(), photoBase64: event.photoBase64) { base64Image in
                             selectedEventImage = base64Image
+                            selectedEventForSheet = event
                             showingEventImageSheet = true
                         }
                     }
@@ -340,6 +342,7 @@ struct MapHomeView: View {
                     Annotation(event.name, coordinate: CLLocationCoordinate2D(latitude: event.location.latitude, longitude: event.location.longitude)) {
                         EventPin(name: event.name, icon: event.icon, date: event.createdAt.dateValue(), photoBase64: event.photoBase64) { base64Image in
                             selectedEventImage = base64Image
+                            selectedEventForSheet = event
                             showingEventImageSheet = true
                         }
                     }
