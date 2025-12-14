@@ -56,43 +56,14 @@ struct MapHomeView: View {
                 theMap
                     .ignoresSafeArea()
 
-                // TOP BAR (actualizado con botón de rutas)
+                // TOP BAR (sin botón de activar todas las rutas)
                 VStack {
                     HStack {
                         topBar
                         
                         Spacer()
                         
-                        // Botón para toggle de rutas
-                        Button {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                showEventRoutes.toggle()
-                                if showEventRoutes {
-                                    calculateEventRoutes()
-                                } else {
-                                    eventsVM.clearRoutes()
-                                }
-                            }
-                        } label: {
-                            ZStack(alignment: .topTrailing) {
-                                Image(systemName: "arrow.triangle.turn.up.right.circle.fill") // icono de rutas activas
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(showEventRoutes ? Brand.tint : .secondary)
-                                    .frame(width: 44, height: 44)
-                                    .background(Circle().fill(.ultraThinMaterial))
-                                
-                                if showEventRoutes, !eventsVM.eventRoutes.isEmpty {
-                                    Text("\(eventsVM.eventRoutes.count)")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundStyle(.white)
-                                        .padding(6)
-                                        .background(Circle().fill(Brand.tint))
-                                        .offset(x: 6, y: -6)
-                                }
-                            }
-                        }
-                        
-                        // Nuevo botón para cancelar rutas (solo visible cuando hay rutas activas)
+                        // Botón cancelar rutas (se mantiene, solo visible si hay rutas)
                         if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
                             Button {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
