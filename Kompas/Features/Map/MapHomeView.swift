@@ -82,7 +82,7 @@ struct MapHomeView: View {
                                         .foregroundStyle(.red)
                                         .frame(width: 44, height: 44)
                                 }
-                                .glassEffect(.regular.tint(.red).interactive())
+                                .glassEffect()
                                 .transition(.scale.combined(with: .opacity))
                             }
                         }
@@ -168,7 +168,6 @@ struct MapHomeView: View {
                 queue: .main
             ) { notification in
                 if let eventId = notification.object as? String {
-                    print("🗑️ Cancelando ruta específica para evento: \(eventId)")
                     eventsVM.clearRoute(for: eventId)
                     
                     // Si no quedan rutas, desactivar el modo de rutas
@@ -417,7 +416,6 @@ struct MapHomeView: View {
     
     // MARK: - Nueva función para mostrar ruta de evento específico
     private func showSpecificEventRoute(eventId: String) {
-        print("🎯 Mostrando ruta para evento ID: \(eventId)")
         
         // Activar el toggle de rutas
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -426,7 +424,6 @@ struct MapHomeView: View {
         
         // Enfocar en el evento específico si existe una ruta calculada
         if let route = eventsVM.eventRoutes[eventId] {
-            print("✅ Ruta encontrada, enfocando en el mapa")
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                 camera = .region(
                     MKCoordinateRegion(
@@ -437,12 +434,10 @@ struct MapHomeView: View {
                 )
             }
         } else {
-            print("⏳ Buscando evento para calcular ruta...")
             // Si no hay ruta calculada, buscar el evento y calcularlo
             if let event = eventsVM.upcomingEvents.first(where: { $0.id == eventId }),
                let userLocation = locationManager.userLocation {
                 
-                print("🗺️ Calculando nueva ruta...")
                 eventsVM.calculateRoute(for: event, from: userLocation)
                 
                 // Enfocar en la ubicación del evento mientras se calcula la ruta
@@ -460,7 +455,7 @@ struct MapHomeView: View {
                     )
                 }
             } else {
-                print("❌ No se encontró el evento o la ubicación del usuario")
+                print("No se encontró el evento o la ubicación del usuario")
             }
         }
     }

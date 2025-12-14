@@ -13,7 +13,6 @@ final class NotificationManager {
         do {
             return try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
         } catch {
-            print("❌ Error solicitando permisos: \(error)")
             return false
         }
     }
@@ -21,7 +20,7 @@ final class NotificationManager {
     func notifyArrivalAtDestination(memberName: String, destination: String) {
         // { changed code } Verificar que notificaciones estén habilitadas
         guard isNotificationsEnabled() else {
-            print("⏸️ Notificaciones deshabilitadas")
+            print("Notificaciones deshabilitadas")
             return
         }
         
@@ -36,9 +35,9 @@ final class NotificationManager {
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("❌ Error enviando notificación: \(error)")
+                print("Error enviando notificación: \(error)")
             } else {
-                print("✅ Notificación enviada: \(memberName) llegó a \(destination)")
+                print("Notificación enviada: \(memberName) llegó a \(destination)")
             }
         }
     }
@@ -46,7 +45,7 @@ final class NotificationManager {
     func notifyDeparture(memberName: String, origin: String) {
         // { changed code }} Verificar que notificaciones estén habilitadas
         guard isNotificationsEnabled() else {
-            print("⏸️ Notificaciones deshabilitadas")
+            print("Notificaciones deshabilitadas")
             return
         }
         
@@ -60,9 +59,9 @@ final class NotificationManager {
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("❌ Error enviando notificación: \(error)")
+                print("Error enviando notificación: \(error)")
             } else {
-                print("✅ Notificación enviada: \(memberName) salió de \(origin)")
+                print("Notificación enviada: \(memberName) salió de \(origin)")
             }
         }
     }
@@ -83,9 +82,9 @@ final class NotificationManager {
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("❌ Error enviando notificación SOS: \(error)")
+                print("Error enviando notificación SOS: \(error)")
             } else {
-                print("🚨 Notificación SOS enviada: \(memberName)")
+                print("Notificación SOS enviada: \(memberName)")
             }
         }
     }

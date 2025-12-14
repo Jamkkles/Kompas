@@ -47,29 +47,23 @@ struct EventDetailView: View {
                     } else {
                         // Si no hay ruta activa, mostrar botón de ir a evento
                         Button("Ir a evento") {
-                            // Usar el LocationManager del environment object
                             if let userLocation = locationManager.userLocation {
-                                print("🗺️ Calculando ruta desde: \(userLocation)")
-                                print("🎯 Hacia evento: \(event.name) en \(event.location)")
-                                
-                                // Calcular la ruta para este evento específico
+                                // { changed code } Si está oculto, ponerlo visible antes de calcular la ruta
+                                if event.isHidden == true {
+                                    viewModel.setEventVisibility(event, hidden: false)
+                                    event.isHidden = false // actualizar estado local para que el switch cambie
+                                }
+
                                 viewModel.calculateRoute(for: event, from: userLocation)
-                                
-                                // Activar el modo de rutas en el mapa principal
                                 NotificationCenter.default.post(
                                     name: NSNotification.Name("ShowEventRoute"),
                                     object: event.id
                                 )
-                                
-                                print("📡 Notificación enviada para evento: \(event.id ?? "sin ID")")
-                                
-                                // Cambiar al tab del mapa
+
                                 selectedTab = 0
-                                
-                                // Cerrar la vista actual
                                 dismiss()
                             } else {
-                                print("❌ No hay ubicación disponible")
+                                print("No hay ubicación disponible")
                             }
                         }
                         .buttonStyle(.borderedProminent)

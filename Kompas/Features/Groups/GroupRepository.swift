@@ -20,7 +20,6 @@ final class GroupRepository: ObservableObject {
                 .whereField("memberIds", arrayContains: uid)
                 .addSnapshotListener { [weak self] snapshot, err in
                     if let err = err {
-                        print("❌ Listener groups error:", err.localizedDescription)
                         self?.lastError = err.localizedDescription
                         self?.groups = []
                         return
@@ -33,11 +32,9 @@ final class GroupRepository: ObservableObject {
                     // Ordena en memoria (por nombre asc). Cambia a createdAt si prefieres.
                     result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
                     self?.groups = result
-                    print("✅ Groups loaded (\(result.count)) para uid:", uid)
                 }
 
         } catch {
-            print("❌ No se pudo iniciar listener:", error.localizedDescription)
             self.lastError = error.localizedDescription
             self.groups = []
         }

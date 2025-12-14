@@ -32,8 +32,6 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        print("📬 Notificación recibida mientras la app está activa")
-        // Mostrar alerta, badge y sonido incluso en primer plano
         completionHandler([.banner, .sound, .badge])
     }
     
@@ -43,7 +41,6 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        print("👆 Usuario hizo tap en notificación: \(response.notification.request.content.title)")
         completionHandler()
     }
 }

@@ -28,7 +28,6 @@ class MapSearchVM: ObservableObject {
                 self.isSearching = false
                 
                 if let error = error {
-                    print("Error en búsqueda: \(error.localizedDescription)")
                     self.results = []
                     return
                 }

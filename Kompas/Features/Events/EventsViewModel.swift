@@ -15,7 +15,6 @@ final class EventsViewModel: ObservableObject {
             .order(by: "createdAt", descending: true)
             .addSnapshotListener { (querySnapshot, error) in
                 guard let documents = querySnapshot?.documents else {
-                    print("No documents")
                     return
                 }
 
@@ -30,11 +29,9 @@ final class EventsViewModel: ObservableObject {
             let eventRef = db.collection("events").document(eventID)
             eventRef.updateData(["name": newName]) { [weak self] error in
                 if let error = error {
-                    print("Error updating event: \(error.localizedDescription)")
                     self?.errorMessage = error.localizedDescription
                     self?.showErrorAlert = true
                 } else {
-                    print("Event successfully updated")
                     if let index = self?.upcomingEvents.firstIndex(where: { $0.id == event.id }) {
                         self?.upcomingEvents[index].name = newName
                     }
@@ -52,13 +49,26 @@ final class EventsViewModel: ObservableObject {
         
         eventRef.updateData(["isHidden": newHiddenState]) { [weak self] error in
             if let error = error {
-                print("❌ Error actualizando visibilidad: \(error.localizedDescription)")
                 self?.errorMessage = error.localizedDescription
                 self?.showErrorAlert = true
             } else {
-                print("✅ Visibilidad del evento actualizada: \(newHiddenState ? "Oculto" : "Visible")")
                 if let index = self?.upcomingEvents.firstIndex(where: { $0.id == event.id }) {
                     self?.upcomingEvents[index].isHidden = newHiddenState
+                }
+            }
+        }
+    }
+
+    func setEventVisibility(_ event: EventItem, hidden: Bool) {
+        guard let eventID = event.id else { return }
+        let eventRef = db.collection("events").document(eventID)
+        eventRef.updateData(["isHidden": hidden]) { [weak self] error in
+            if let error = error {
+                self?.errorMessage = error.localizedDescription
+                self?.showErrorAlert = true
+            } else {
+                if let idx = self?.upcomingEvents.firstIndex(where: { $0.id == event.id }) {
+                    self?.upcomingEvents[idx].isHidden = hidden
                 }
             }
         }
@@ -68,11 +78,9 @@ final class EventsViewModel: ObservableObject {
         if let eventID = event.id {
             db.collection("events").document(eventID).delete() { [weak self] error in
                 if let error = error {
-                    print("Error removing document: \(error.localizedDescription)")
                     self?.errorMessage = error.localizedDescription
                     self?.showErrorAlert = true
                 } else {
-                    print("Document successfully removed!")
                     self?.upcomingEvents.removeAll(where: { $0.id == event.id })
                 }
             }
@@ -82,14 +90,8 @@ final class EventsViewModel: ObservableObject {
     // Nueva función para calcular rutas
     func calculateRoute(for event: EventItem, from userLocation: CLLocationCoordinate2D) {
         guard let eventId = event.id else { 
-            print("❌ Evento sin ID")
             return 
         }
-        
-        print("🗺️ Calculando ruta para evento: \(event.name)")
-        print("   • Desde: \(userLocation)")
-        print("   • Hacia: \(event.location)")
-        
         let request = MKDirections.Request()
         request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation))
         request.destination = MKMapItem(placemark: MKPlacemark(
@@ -104,30 +106,24 @@ final class EventsViewModel: ObservableObject {
         directions.calculate { [weak self] response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    print("❌ Error calculando ruta: \(error.localizedDescription)")
                     return
                 }
                 
                 if let route = response?.routes.first {
-                    print("✅ Ruta calculada exitosamente")
-                    print("   • Distancia: \(route.distance/1000) km")
-                    print("   • Tiempo: \(route.expectedTravelTime/60) min")
                     self?.eventRoutes[eventId] = route
                 } else {
-                    print("❌ No se pudo calcular la ruta")
+                    print("No se pudo calcular la ruta")
                 }
             }
         }
     }
     
     func clearRoutes() {
-        print("🗑️ Limpiando todas las rutas")
         eventRoutes.removeAll()
     }
     
     // Nueva función para cancelar una ruta específica
     func clearRoute(for eventId: String) {
-        print("🗑️ Cancelando ruta para evento: \(eventId)")
         eventRoutes.removeValue(forKey: eventId)
     }
 }

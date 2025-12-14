@@ -348,9 +348,8 @@ struct ProfileView: View {
                                             let granted = await NotificationManager.shared.requestAuthorization()
                                             if !granted {
                                                 notificationsEnabled = false
-                                                print("❌ Permisos rechazados")
                                             } else {
-                                                print("✅ Permisos concedidos")
+                                                print("Permisos concedidos")
                                             }
                                         }
                                     }
@@ -570,9 +569,8 @@ extension SessionStore {
                     
                     let downloadURL = try await storageRef.downloadURL()
                     changeRequest.photoURL = downloadURL
-                    print("✅ Foto subida: \(downloadURL)")
                 } catch {
-                    print("❌ Error subiendo imagen: \(error.localizedDescription)")
+                    print("Error subiendo imagen: \(error.localizedDescription)")
                     throw error
                 }
             }
