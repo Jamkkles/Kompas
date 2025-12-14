@@ -29,9 +29,8 @@ struct MemberPresence: Identifiable, Equatable {
 final class PresenceRepository: ObservableObject {
     @Published var members: [MemberPresence] = []
     private var listener: ListenerRegistration?
+    private var previousMembers: [String: MemberPresence] = [:]
 
-    /// Escucha presencias en: {groupDocPath}/members
-    /// Ej: "users/{ownerId}/groups/{groupId}/members"
     func startListening(groupDocPath: String) {
         stopListening()
 
@@ -78,6 +77,24 @@ final class PresenceRepository: ObservableObject {
             self?.members = items.sorted {
                 ($0.lastUpdate ?? .distantPast) > ($1.lastUpdate ?? .distantPast)
             }
+
+            // Después de actualizar members, comparar con previousMembers
+            let previousCoords = self?.previousMembers.mapValues { $0.coordinate }
+            let currentCoords = self?.members.reduce(into: [:]) { dict, member in
+                dict[member.id] = member.coordinate
+            }
+
+            // Detectar llegadas (coordinate cambió a no-nil en destino cercano)
+            for member in items {
+                if let prevMember = self?.previousMembers[member.id],
+                   let newCoord = member.coordinate,
+                   prevMember.coordinate == nil {
+                    // Miembro acaba de "llegar" (obtuvo ubicación tras estar oculto)
+                    NotificationManager.shared.notifyArrivalAtDestination(memberName: member.displayName, destination: member.locationText)
+                }
+            }
+
+            self?.previousMembers = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         }
     }
 

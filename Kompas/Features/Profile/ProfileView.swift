@@ -1,4 +1,6 @@
 import SwiftUI
+import FirebaseAuth
+import FirebaseStorage
 
 struct ProfileView: View {
     @EnvironmentObject var session: SessionStore
@@ -200,12 +202,6 @@ struct ProfileView: View {
             ) {
                 showEditProfile = true
             }
-            .sheet(isPresented: $showEditProfile) {
-                if let user = session.user {
-                    EditProfileView(user: user)
-                        .environmentObject(session)
-                }
-            }
             
             Divider()
                 .padding(.leading, 56)
@@ -217,7 +213,7 @@ struct ProfileView: View {
             ) {
                 showNotifications = true
             }
-            
+
             Divider()
                 .padding(.leading, 56)
 
@@ -244,7 +240,7 @@ struct ProfileView: View {
                 .padding(.leading, 56)
             
             ProfileOptionRow(
-                icon: "gear",
+                icon: "gearshape.fill",
                 title: "Configuración",
                 iconColor: .gray
             ) {
@@ -252,16 +248,15 @@ struct ProfileView: View {
             }
         }
         .padding(12)
-        .background(                                     
-            RoundedRectangle(cornerRadius: 22)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
                 .fill(denseCardBackgroundColor)
         )
-        .glassEffect(in: .rect(cornerRadius: 22))
+        .glassEffect(.regular, in: .rect(cornerRadius: 22))
         .overlay(
             RoundedRectangle(cornerRadius: 22)
                 .stroke(Color.primary.opacity(0.08), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
     }
     
     // MARK: - Logout Button
@@ -303,65 +298,31 @@ struct ProfileView: View {
     
     // MARK: - Sheets
     
+    @ViewBuilder
     private var editProfileSheet: some View {
-        NavigationView {
-            VStack(spacing: 24) {
-                Spacer()
-                
-                ZStack {
-                    Circle()
-                        .fill(Brand.tint.opacity(0.1))
-                        .frame(width: 80, height: 80)
-                    
-                    Image(systemName: "person.crop.circle.badge.checkmark")
-                        .font(.system(size: 36, weight: .semibold))
-                        .foregroundStyle(Brand.tint)
-                }
-                
-                VStack(spacing: 8) {
-                    Text("Editar Perfil")
-                        .font(.system(.title2, design: .rounded, weight: .bold))
-                    
-                    Text("Esta función estará disponible pronto.\nPodrás personalizar tu perfil, foto y más.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(2)
-                }
-                .padding(.horizontal, 40)
-                
-                Spacer()
+        if let user = session.user {
+            NavigationView {
+                EditProfileView(user: user)
+                    .environmentObject(session)
+                    .navigationBarTitleDisplayMode(.inline)
             }
-            .navigationTitle("Editar Perfil")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cerrar") { showEditProfile = false }
-                }
-            }
+            .tint(Brand.tint)
         }
-        .tint(Brand.tint)
     }
     
     private var notificationsSheet: some View {
         NavigationView {
             Form {
-                Section {
+                Section(header: Text("General")) {
                     Toggle("Notificaciones Push", isOn: .constant(true))
                     Toggle("Sonidos", isOn: .constant(true))
                     Toggle("Vibración", isOn: .constant(false))
-                } header: {
-                    Text("General")
                 }
                 
-                Section {
+                Section(header: Text("Alertas")) {
                     Toggle("Nuevos mensajes", isOn: .constant(true))
                     Toggle("Invitaciones a grupos", isOn: .constant(true))
                     Toggle("Ubicación compartida", isOn: .constant(false))
-                } header: {
-                    Text("Alertas")
-                } footer: {
-                    Text("Recibe notificaciones cuando alguien comparte su ubicación contigo")
                 }
             }
             .navigationTitle("Notificaciones")
@@ -504,8 +465,41 @@ struct ProfileOptionRow: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
+            .contentShape(Rectangle()) 
         }
         .buttonStyle(.plain)
+    }
+}
+
+extension SessionStore {
+    @MainActor
+    func updateProfile(name: String, photoBase64: String?) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw NSError(domain: "FirebaseAuth", code: -10, userInfo: [NSLocalizedDescriptionKey: "No hay usuario autenticado"])
+        }
+
+        let changeRequest = user.createProfileChangeRequest()
+        changeRequest.displayName = name
+
+        if let photoBase64 = photoBase64 {
+            let storageRef = Storage.storage().reference().child("profile_pictures/\(user.uid).jpg")
+            if let imageData = Data(base64Encoded: photoBase64) {
+                do {
+                    _ = try await storageRef.putDataAsync(imageData)
+                    
+                    try await Task.sleep(nanoseconds: 500_000_000) // 0.5 segundos
+                    
+                    let downloadURL = try await storageRef.downloadURL()
+                    changeRequest.photoURL = downloadURL
+                    print("✅ Foto subida: \(downloadURL)")
+                } catch {
+                    print("❌ Error subiendo imagen: \(error.localizedDescription)")
+                    throw error
+                }
+            }
+        }
+
+        try await changeRequest.commitChanges()
     }
 }
 
