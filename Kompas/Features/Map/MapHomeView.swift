@@ -65,32 +65,15 @@ struct MapHomeView: View {
 
                // Contenedor de efectos Liquid Glass para los controles flotantes
                GlassEffectContainer(spacing: 12) {
-                    // TOP BAR (sin botón de activar todas las rutas)
+                    // TOP BAR (sin botón de cancelar rutas)
                     VStack {
                         HStack {
                             topBar
                             
                             Spacer()
-                            
-                            // Botón cancelar rutas (se mantiene, solo visible si hay rutas)
-                            if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
-                                Button {
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                                        showEventRoutes = false
-                                        eventsVM.clearRoutes()
-                                    }
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(.red)
-                                        .frame(width: 44, height: 44)
-                                }
-                                .glassEffect()
-                                .transition(.scale.combined(with: .opacity))
-                            }
                         }
                         .padding(.horizontal, 16)
-                        .padding(.top, safeTop + 2) // sube los botones
+                        .padding(.top, safeTop + 2)
                         .opacity(sheetPosition == .expanded ? 0 : 1)
                         
                         Spacer()
@@ -502,6 +485,20 @@ struct MapHomeView: View {
             }
             .glassEffect(.regular.interactive(), in: .circle)
 
+            // Nuevo botón de gestión de rutas (solo visible cuando hay rutas activas)
+            if showEventRoutes && !eventsVM.eventRoutes.isEmpty {
+                Button {
+                    showRouteManagementSheet = true
+                } label: {
+                    Image(systemName: "location.north.line.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(12)
+                }
+                .glassEffect(.regular.tint(Brand.tint), in: .circle)
+                .shadow(color: Brand.tint.opacity(0.3), radius: 8, x: 0, y: 4)
+                .transition(.scale.combined(with: .opacity))
+            }
 
             // botón verde para crear evento (mismo estilo/tamaño que los otros controles, solo tint verde)
             if searchedLocation != nil {
